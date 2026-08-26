@@ -5,8 +5,8 @@ import type {
   Task,
   TaskStatus,
   TaskWithAssignees,
-} from '../../domain/model.js'
-import type { ArchivedTask, NewTask, TaskRepository } from '../../application/ports.js'
+} from '#domain/model.js'
+import type { ArchivedTask, NewTask, TaskRepository } from '#application/ports.js'
 
 /** Se reconstruye en tres consultas, así que vive en un único sitio. */
 const ASSIGNEES_JSON = `

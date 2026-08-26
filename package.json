@@ -8,11 +8,17 @@
     "node": ">=24"
   },
   "packageManager": "pnpm@11.20.0",
+  "imports": {
+    "#*": {
+      "development": "./src/*",
+      "default": "./dist/*"
+    }
+  },
   "scripts": {
-    "dev": "tsx watch src/main.ts",
+    "dev": "tsx watch --conditions development src/main.ts",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
-    "db:migrate": "tsx src/infrastructure/db/migrate.ts",
+    "db:migrate": "tsx --conditions development src/infrastructure/db/migrate.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"

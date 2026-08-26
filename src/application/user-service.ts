@@ -1,5 +1,5 @@
-import { userNotFound } from '../domain/errors.js'
-import type { TaskForUser, User, UserWithPendingTasks } from '../domain/model.js'
+import { userNotFound } from '#domain/errors.js'
+import type { TaskForUser, User, UserWithPendingTasks } from '#domain/model.js'
 import type { NewUser, UnitOfWork } from './ports.js'
 
 export const registerUser = (uow: UnitOfWork, input: NewUser): Promise<User> =>

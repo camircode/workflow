@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { hasZodFastifySchemaValidationErrors } from 'fastify-type-provider-zod'
-import { DomainError, type ErrorCode } from '../../domain/errors.js'
+import { DomainError, type ErrorCode } from '#domain/errors.js'
 import type { ErrorBody } from './schemas.js'
 
 /**

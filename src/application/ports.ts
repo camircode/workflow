@@ -17,7 +17,7 @@ import type {
   TaskWithAssignees,
   User,
   UserWithPendingTasks,
-} from '../domain/model.js'
+} from '#domain/model.js'
 
 /**
  * Una unidad de trabajo. Todo caso de uso que modifique más de una fila se

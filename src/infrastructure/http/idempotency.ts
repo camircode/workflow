@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import type { Database, UnitOfWork } from '../../application/ports.js'
+import type { Database, UnitOfWork } from '#application/ports.js'
 
 export const IDEMPOTENCY_HEADER = 'idempotency-key'
 

@@ -1,5 +1,5 @@
 import { Pool, type PoolClient } from 'pg'
-import type { Database, UnitOfWork } from '../../application/ports.js'
+import type { Database, UnitOfWork } from '#application/ports.js'
 import { migrate } from './migrate.js'
 import { PostgresIdempotencyStore } from './idempotency-store.js'
 import { PostgresTaskRepository } from './task-repository.js'

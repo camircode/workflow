@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { ERROR_CODES } from '../../domain/errors.js'
+import { ERROR_CODES } from '#domain/errors.js'
 
 /**
  * Una definición por forma, usada dos veces: para validar lo que llega y para
@@ -23,15 +23,17 @@ const trimmed = (field: string) =>
 // varias líneas en mitad del cuerpo de ejemplo.
 export const CreateUserBody = z
   .object({
-    name: trimmed('name').meta({ example: 'Ada' }),
-    lastName: trimmed('lastName').meta({ example: 'Lovelace' }),
-    email: z.email('email debe ser una dirección válida').meta({ example: 'ada@example.com' }),
+    name: trimmed('name').meta({ example: 'Lucía' }),
+    lastName: trimmed('lastName').meta({ example: 'Fernández' }),
+    email: z
+      .email('email debe ser una dirección válida')
+      .meta({ example: 'lucia.fernandez@example.com' }),
   })
   .meta({ id: 'CreateUserBody' })
 
 export const CreateTaskBody = z
   .object({
-    title: trimmed('title').meta({ example: 'Preparar la demo' }),
+    title: trimmed('title').meta({ example: 'Alta del proveedor Distribuciones Márquez' }),
     // Opcional según la especificación. Ausente y null significan ambos "sin
     // descripción", y ambos se guardan como null en lugar de preservar una
     // distinción que la API tendría después que explicar.
@@ -40,7 +42,7 @@ export const CreateTaskBody = z
       .trim()
       .nullish()
       .transform((value) => value ?? null)
-      .meta({ example: 'Repasar el guion antes del viernes' }),
+      .meta({ example: 'Validar la documentación fiscal y darlo de alta en el ERP' }),
   })
   .meta({ id: 'CreateTaskBody' })
 
@@ -85,27 +87,51 @@ const AT = '2026-08-26T04:43:14.221Z'
 
 const USER_EXAMPLE = {
   id: 1,
-  name: 'Ada',
-  lastName: 'Lovelace',
-  email: 'ada@example.com',
+  name: 'Lucía',
+  lastName: 'Fernández',
+  email: 'lucia.fernandez@example.com',
   createdAt: AT,
 }
 
-const ASSIGNEE_EXAMPLE = {
-  userId: 1,
-  name: 'Ada',
-  lastName: 'Lovelace',
-  email: 'ada@example.com',
-  completed: true,
-  completedAt: AT,
-}
+/**
+ * Dos personas con partes distintas de la misma tarea, una terminada y la otra
+ * no.
+ *
+ * Es el estado que explica de qué va esto. Un ejemplo con un solo asignado, o
+ * con todos terminados, no enseña lo que el enunciado llama "indicando cuáles ya
+ * completaron su parte", que es la razón por la que la tarea existe.
+ */
+const ASSIGNEES_EXAMPLE = [
+  {
+    userId: 1,
+    name: 'Lucía',
+    lastName: 'Fernández',
+    email: 'lucia.fernandez@example.com',
+    completed: true,
+    completedAt: AT,
+  },
+  {
+    userId: 2,
+    name: 'Diego',
+    lastName: 'Ramírez',
+    email: 'diego.ramirez@example.com',
+    completed: false,
+    completedAt: null,
+  },
+]
 
+/**
+ * Una tarea que cruza dos departamentos: la descripción nombra los dos trabajos,
+ * y por eso tiene dos asignados. Sigue abierta porque falta uno de ellos, que es
+ * el caso interesante y además el coherente con la restricción de la tabla:
+ * archived_at sólo tiene valor cuando el estado es archived.
+ */
 const TASK_FIELDS = {
   id: 1,
-  title: 'Preparar la demo',
-  description: 'Repasar el guion antes del viernes',
-  status: 'archived',
-  archivedAt: AT,
+  title: 'Alta del proveedor Distribuciones Márquez',
+  description: 'Validar la documentación fiscal y darlo de alta en el ERP',
+  status: 'open',
+  archivedAt: null,
   createdAt: AT,
 }
 
@@ -125,7 +151,10 @@ export const TaskSummary = z
     title: z.string(),
     status: z.enum(['open', 'archived']),
   })
-  .meta({ id: 'TaskSummary', example: { id: 1, title: 'Preparar la demo', status: 'open' } })
+  .meta({
+    id: 'TaskSummary',
+    example: { id: 2, title: 'Revisión trimestral de contratos', status: 'open' },
+  })
 
 export const UserWithPendingTasksResponse = UserResponse.extend({
   pendingTasks: z.array(TaskSummary),
@@ -133,7 +162,7 @@ export const UserWithPendingTasksResponse = UserResponse.extend({
   id: 'UserWithPendingTasks',
   example: {
     ...USER_EXAMPLE,
-    pendingTasks: [{ id: 2, title: 'Revisar el presupuesto', status: 'open' }],
+    pendingTasks: [{ id: 2, title: 'Revisión trimestral de contratos', status: 'open' }],
   },
 })
 
@@ -146,7 +175,7 @@ export const AssigneeResponse = z
     completed: z.boolean(),
     completedAt: timestamp.nullable(),
   })
-  .meta({ id: 'Assignee', example: ASSIGNEE_EXAMPLE })
+  .meta({ id: 'Assignee', example: ASSIGNEES_EXAMPLE[0] })
 
 export const TaskResponse = z
   .object({
@@ -158,7 +187,7 @@ export const TaskResponse = z
     createdAt: timestamp,
     assignees: z.array(AssigneeResponse),
   })
-  .meta({ id: 'Task', example: { ...TASK_FIELDS, assignees: [ASSIGNEE_EXAMPLE] } })
+  .meta({ id: 'Task', example: { ...TASK_FIELDS, assignees: ASSIGNEES_EXAMPLE } })
 
 export const TaskForUserResponse = z
   .object({

@@ -1,9 +1,9 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
-import { listTasksForUser, listUsers, registerUser } from '../../../application/user-service.js'
-import type { Database } from '../../../application/ports.js'
-import { presentTaskForUser, presentUser, presentUserWithPendingTasks } from '../presenters.js'
-import { runIdempotent } from '../idempotency.js'
-import { idempotencyKeyOf } from '../request.js'
+import { listTasksForUser, listUsers, registerUser } from '#application/user-service.js'
+import type { Database } from '#application/ports.js'
+import { presentTaskForUser, presentUser, presentUserWithPendingTasks } from '#infrastructure/http/presenters.js'
+import { runIdempotent } from '#infrastructure/http/idempotency.js'
+import { idempotencyKeyOf } from '#infrastructure/http/request.js'
 import {
   CreateUserBody,
   ConflictError,
@@ -14,7 +14,7 @@ import {
   UserResponse,
   UserWithPendingTasksResponse,
   ValidationError,
-} from '../schemas.js'
+} from '#infrastructure/http/schemas.js'
 import { z } from 'zod'
 
 export const usersRoutes =

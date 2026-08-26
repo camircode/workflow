@@ -2,7 +2,7 @@ import type {
   ArchivedTaskNotification,
   Notifier,
   NotificationOutcome,
-} from '../../application/ports.js'
+} from '#application/ports.js'
 
 /**
  * Un único POST al destino configurado, con un timeout.

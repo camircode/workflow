@@ -1,7 +1,7 @@
 import type { PoolClient } from 'pg'
-import { emailAlreadyRegistered } from '../../domain/errors.js'
-import type { TaskForUser, User, UserWithPendingTasks } from '../../domain/model.js'
-import type { NewUser, UserRepository } from '../../application/ports.js'
+import { emailAlreadyRegistered } from '#domain/errors.js'
+import type { TaskForUser, User, UserWithPendingTasks } from '#domain/model.js'
+import type { NewUser, UserRepository } from '#application/ports.js'
 import { isUniqueViolation } from './errors.js'
 
 export class PostgresUserRepository implements UserRepository {

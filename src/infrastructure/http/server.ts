@@ -8,8 +8,8 @@ import {
   validatorCompiler,
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod'
-import type { NotificationDispatcher } from '../../application/notification-dispatcher.js'
-import type { Database } from '../../application/ports.js'
+import type { NotificationDispatcher } from '#application/notification-dispatcher.js'
+import type { Database } from '#application/ports.js'
 import { registerErrorHandler } from './errors.js'
 import { usersRoutes } from './routes/users.js'
 import { tasksRoutes } from './routes/tasks.js'

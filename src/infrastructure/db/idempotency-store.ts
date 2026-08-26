@@ -1,6 +1,6 @@
 import type { PoolClient } from 'pg'
-import { DomainError, idempotencyKeyReused } from '../../domain/errors.js'
-import type { IdempotencyClaim, IdempotencyStore, StoredResponse } from '../../application/ports.js'
+import { DomainError, idempotencyKeyReused } from '#domain/errors.js'
+import type { IdempotencyClaim, IdempotencyStore, StoredResponse } from '#application/ports.js'
 
 /**
  * Hace que un POST se pueda enviar dos veces sin peligro.

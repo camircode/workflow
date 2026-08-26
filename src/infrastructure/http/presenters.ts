@@ -5,7 +5,7 @@ import type {
   TaskWithAssignees,
   User,
   UserWithPendingTasks,
-} from '../../domain/model.js'
+} from '#domain/model.js'
 
 /**
  * Los objetos del dominio llevan Date; JSON no. Convertir aquí, una sola vez,

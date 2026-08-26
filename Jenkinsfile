@@ -56,6 +56,10 @@ pipeline {
                       node:24 \
                       sh -c '
                         set -eu
+                        # The directory has to exist first: corepack resolves it
+                        # with realpathSync and fails with a bare ENOENT if it
+                        # does not.
+                        mkdir -p /tmp/bin
                         corepack enable --install-directory /tmp/bin
                         export PATH=/tmp/bin:$PATH
                         pnpm install --frozen-lockfile

@@ -68,6 +68,47 @@ export const ListTasksQuery = z.object({
 
 const timestamp = z.iso.datetime()
 
+/**
+ * Un ejemplo por modelo de respuesta.
+ *
+ * Sin ellos, Swagger UI construye el cuerpo de ejemplo a partir del esquema, y
+ * lo que produce no le sirve a nadie: `-9007199254740991` para los enteros,
+ * porque toma el mínimo declarado; y varias líneas de caracteres aleatorios
+ * para `email` y para las fechas, porque genera una cadena que cumpla el patrón
+ * que Zod emite junto al formato.
+ *
+ * A nivel de modelo y no campo por campo, para poder escribir el objeto
+ * completo —incluidos los anidados— y que la respuesta de ejemplo se lea como
+ * una respuesta real.
+ */
+const AT = '2026-08-26T04:43:14.221Z'
+
+const USER_EXAMPLE = {
+  id: 1,
+  name: 'Ada',
+  lastName: 'Lovelace',
+  email: 'ada@example.com',
+  createdAt: AT,
+}
+
+const ASSIGNEE_EXAMPLE = {
+  userId: 1,
+  name: 'Ada',
+  lastName: 'Lovelace',
+  email: 'ada@example.com',
+  completed: true,
+  completedAt: AT,
+}
+
+const TASK_FIELDS = {
+  id: 1,
+  title: 'Preparar la demo',
+  description: 'Repasar el guion antes del viernes',
+  status: 'archived',
+  archivedAt: AT,
+  createdAt: AT,
+}
+
 export const UserResponse = z
   .object({
     id: z.number().int(),
@@ -76,7 +117,7 @@ export const UserResponse = z
     email: z.email(),
     createdAt: timestamp,
   })
-  .meta({ id: 'User' })
+  .meta({ id: 'User', example: USER_EXAMPLE })
 
 export const TaskSummary = z
   .object({
@@ -84,11 +125,17 @@ export const TaskSummary = z
     title: z.string(),
     status: z.enum(['open', 'archived']),
   })
-  .meta({ id: 'TaskSummary' })
+  .meta({ id: 'TaskSummary', example: { id: 1, title: 'Preparar la demo', status: 'open' } })
 
 export const UserWithPendingTasksResponse = UserResponse.extend({
   pendingTasks: z.array(TaskSummary),
-}).meta({ id: 'UserWithPendingTasks' })
+}).meta({
+  id: 'UserWithPendingTasks',
+  example: {
+    ...USER_EXAMPLE,
+    pendingTasks: [{ id: 2, title: 'Revisar el presupuesto', status: 'open' }],
+  },
+})
 
 export const AssigneeResponse = z
   .object({
@@ -99,7 +146,7 @@ export const AssigneeResponse = z
     completed: z.boolean(),
     completedAt: timestamp.nullable(),
   })
-  .meta({ id: 'Assignee' })
+  .meta({ id: 'Assignee', example: ASSIGNEE_EXAMPLE })
 
 export const TaskResponse = z
   .object({
@@ -111,7 +158,7 @@ export const TaskResponse = z
     createdAt: timestamp,
     assignees: z.array(AssigneeResponse),
   })
-  .meta({ id: 'Task' })
+  .meta({ id: 'Task', example: { ...TASK_FIELDS, assignees: [ASSIGNEE_EXAMPLE] } })
 
 export const TaskForUserResponse = z
   .object({
@@ -124,7 +171,7 @@ export const TaskForUserResponse = z
     completed: z.boolean(),
     completedAt: timestamp.nullable(),
   })
-  .meta({ id: 'TaskForUser' })
+  .meta({ id: 'TaskForUser', example: { ...TASK_FIELDS, completed: true, completedAt: AT } })
 
 export const NotificationAttemptResponse = z
   .object({
@@ -134,9 +181,14 @@ export const NotificationAttemptResponse = z
     httpStatus: z.number().int().nullable(),
     error: z.string().nullable(),
   })
-  .meta({ id: 'NotificationAttempt' })
+  .meta({
+    id: 'NotificationAttempt',
+    example: { attemptNumber: 1, attemptedAt: AT, httpStatus: 200, error: null },
+  })
 
-export const MessageResponse = z.object({ message: z.string() }).meta({ id: 'Message' })
+export const MessageResponse = z
+  .object({ message: z.string() })
+  .meta({ id: 'Message', example: { message: 'La tarea 1 está completa y ha sido archivada.' } })
 
 export const ErrorResponse = z
   .object({
@@ -146,6 +198,37 @@ export const ErrorResponse = z
     }),
   })
   .meta({ id: 'Error' })
+
+/**
+ * Un ejemplo por estado, sobre la misma forma.
+ *
+ * Todos conservan el enum completo de códigos, así que el serializador no puede
+ * rechazar una respuesta legítima; lo único que cambia es el ejemplo que se ve
+ * en /docs. Con un solo ejemplo compartido, el 400 de POST /users mostraba
+ * TASK_NOT_FOUND, que ese endpoint no devuelve nunca.
+ */
+export const ValidationError = ErrorResponse.meta({
+  id: 'ValidationError',
+  description: 'El cuerpo, los parámetros de ruta o la query no pasaron validación. `code` es siempre `VALIDATION_ERROR`, y `message` enumera todos los problemas encontrados, no sólo el primero.',
+  example: { error: { code: 'VALIDATION_ERROR', message: '/email email debe ser una dirección válida' } },
+})
+
+export const NotFoundError = ErrorResponse.meta({
+  id: 'NotFoundError',
+  description: '`code` es `TASK_NOT_FOUND` o `USER_NOT_FOUND` según qué no exista. Cuando falta más de un usuario, `message` los nombra a todos de una vez.',
+  example: { error: { code: 'TASK_NOT_FOUND', message: 'No hay ninguna tarea registrada con el id 99.' } },
+})
+
+export const ConflictError = ErrorResponse.meta({
+  id: 'ConflictError',
+  description: 'El recurso existe pero la operación no procede. `code` identifica el caso: `EMAIL_ALREADY_REGISTERED`, `USER_NOT_ASSIGNED`, `TASK_ALREADY_ARCHIVED`, `IDEMPOTENCY_KEY_REUSED` o `IDEMPOTENCY_REQUEST_IN_PROGRESS`.',
+  example: {
+    error: {
+      code: 'IDEMPOTENCY_KEY_REUSED',
+      message: 'La Idempotency-Key 3f1a9c7e-2b44-4d51-9a2f-0c8e5d7b1a63 ya se usó en este endpoint con un cuerpo distinto.',
+    },
+  },
+})
 
 export type ErrorBody = z.infer<typeof ErrorResponse>
 

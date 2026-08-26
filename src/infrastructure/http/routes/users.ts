@@ -6,12 +6,14 @@ import { runIdempotent } from '../idempotency.js'
 import { idempotencyKeyOf } from '../request.js'
 import {
   CreateUserBody,
-  ErrorResponse,
+  ConflictError,
+  NotFoundError,
   IdempotencyHeaders,
   TaskForUserResponse,
   UserIdParams,
   UserResponse,
   UserWithPendingTasksResponse,
+  ValidationError,
 } from '../schemas.js'
 import { z } from 'zod'
 
@@ -26,7 +28,7 @@ export const usersRoutes =
           summary: 'Registrar un usuario',
           headers: IdempotencyHeaders,
           body: CreateUserBody,
-          response: { 201: UserResponse, 400: ErrorResponse, 409: ErrorResponse },
+          response: { 201: UserResponse, 400: ValidationError, 409: ConflictError },
         },
       },
       async (request, reply) => {
@@ -64,7 +66,7 @@ export const usersRoutes =
           tags: ['users'],
           summary: 'Listar las tareas de un usuario y si su parte está hecha',
           params: UserIdParams,
-          response: { 200: z.array(TaskForUserResponse), 404: ErrorResponse },
+          response: { 200: z.array(TaskForUserResponse), 404: NotFoundError },
         },
       },
       async (request, reply) => {

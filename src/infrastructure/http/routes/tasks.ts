@@ -17,12 +17,14 @@ import {
   AssignBody,
   CompleteBody,
   CreateTaskBody,
-  ErrorResponse,
+  ConflictError,
+  NotFoundError,
   IdempotencyHeaders,
   ListTasksQuery,
   MessageResponse,
   NotificationAttemptResponse,
   TaskIdParams,
+  ValidationError,
   TaskResponse,
 } from '../schemas.js'
 
@@ -40,7 +42,7 @@ export const tasksRoutes =
           summary: 'Crear una tarea',
           headers: IdempotencyHeaders,
           body: CreateTaskBody,
-          response: { 201: CreatedTaskResponse, 400: ErrorResponse, 409: ErrorResponse },
+          response: { 201: CreatedTaskResponse, 400: ValidationError, 409: ConflictError },
         },
       },
       async (request, reply) => {
@@ -70,9 +72,9 @@ export const tasksRoutes =
           body: AssignBody,
           response: {
             200: MessageResponse,
-            400: ErrorResponse,
-            404: ErrorResponse,
-            409: ErrorResponse,
+            400: ValidationError,
+            404: NotFoundError,
+            409: ConflictError,
           },
         },
       },
@@ -108,9 +110,9 @@ export const tasksRoutes =
           body: CompleteBody,
           response: {
             200: MessageResponse,
-            400: ErrorResponse,
-            404: ErrorResponse,
-            409: ErrorResponse,
+            400: ValidationError,
+            404: NotFoundError,
+            409: ConflictError,
           },
         },
       },
@@ -148,7 +150,7 @@ export const tasksRoutes =
           tags: ['tasks'],
           summary: 'Listar tareas, opcionalmente filtradas por estado',
           querystring: ListTasksQuery,
-          response: { 200: z.array(TaskResponse), 400: ErrorResponse },
+          response: { 200: z.array(TaskResponse), 400: ValidationError },
         },
       },
       async (request, reply) => {
@@ -164,7 +166,7 @@ export const tasksRoutes =
           tags: ['tasks'],
           summary: 'Leer una tarea con todas las personas asignadas a ella',
           params: TaskIdParams,
-          response: { 200: TaskResponse, 404: ErrorResponse },
+          response: { 200: TaskResponse, 404: NotFoundError },
         },
       },
       async (request, reply) => {
@@ -180,7 +182,7 @@ export const tasksRoutes =
           tags: ['tasks'],
           summary: 'Todos los intentos hechos para notificar al sistema cliente sobre esta tarea',
           params: TaskIdParams,
-          response: { 200: z.array(NotificationAttemptResponse), 404: ErrorResponse },
+          response: { 200: z.array(NotificationAttemptResponse), 404: NotFoundError },
         },
       },
       async (request, reply) => {

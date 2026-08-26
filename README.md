@@ -105,6 +105,17 @@ Tres intentos como máximo, con esperas crecientes, cada uno registrado en su
 propia transacción. Un 4xx no se reintenta, porque el mismo cuerpo va a recibir
 la misma respuesta.
 
+Los dos caminos quedaron registrados en la API desplegada y se pueden consultar
+sin credenciales:
+
+| | |
+|---|---|
+| [`/tasks/12/notifications`](https://workflow.camir.tech/tasks/12/notifications) | el destino acepta: un intento, `httpStatus` 200 |
+| [`/tasks/13/notifications`](https://workflow.camir.tech/tasks/13/notifications) | el destino devuelve 503: tres intentos, con esperas de un segundo y dos |
+
+La tarea 13 se archivó a propósito mientras el destino fallaba. Los `attemptedAt`
+llevan la separación real entre intentos.
+
 Queda una ventana: si el proceso muere entre el commit del archivado y el primer
 intento, nadie envía nada. Una tarea archivada sin ningún intento registrado
 identifica ese caso sin ambigüedad, así que el arranque las entrega. Va detrás

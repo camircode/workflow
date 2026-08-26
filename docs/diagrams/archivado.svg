@@ -1,98 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg viewBox="0 0 1200 760" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="workflow-seq-title workflow-seq-desc">
+<svg viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="workflow-seq-title workflow-seq-desc">
       <title id="workflow-seq-title">Archivado exactamente una vez</title>
-      <desc id="workflow-seq-desc">Dos personas completan la última parte de la misma tarea en el mismo instante y sus peticiones caen en réplicas distintas de la API. Un lock de fila sobre la tarea serializa ambas transacciones: la primera actualiza su parte y encuentra que todavía queda alguien pendiente, la segunda encuentra que no queda nadie y es la única que consigue archivar. La fila que devuelve ese UPDATE es lo que autoriza a enviar la notificación, una sola vez.</desc>
+      <desc id="workflow-seq-desc">Dos personas completan la última parte de la misma tarea en el mismo instante, y sus peticiones caen en réplicas distintas. Un lock de fila sobre la tarea pone las dos transacciones en orden: la primera todavía encuentra a alguien pendiente, la segunda ya no encuentra a nadie y es la única que consigue archivar. La fila que devuelve ese UPDATE es lo que autoriza a enviar la notificación.</desc>
       <defs>
   <style>@import url('https://fonts.googleapis.com/css2?family=Khand:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
-        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#a7ada5"/></marker>
-        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#d7ff4f"/></marker>
-        <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#a7ada5" stroke-width="1.2"/></marker>
+        <marker id="arrow" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#a7ada5"/></marker>
+        <marker id="arrow-accent" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#d7ff4f"/></marker>
+        <marker id="arrow-link" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#ff766c"/></marker>
+        <marker id="arrow-open" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polyline points="0 0, 9 3.5, 0 7" fill="none" stroke="#a7ada5" stroke-width="1.4"/></marker>
       </defs>
       <rect width="100%" height="100%" fill="#080909"/>
-
-      <rect x="34" y="48" width="152" height="44" rx="6" fill="#080909"/>
-      <rect x="34" y="48" width="152" height="44" rx="6" fill="#171a19" stroke="#343934" stroke-width="1"/>
-      <rect x="42" y="54" width="52" height="12" rx="2" fill="none" stroke="#6f766e" stroke-width="0.8"/>
-      <text x="68" y="63" fill="#6f766e" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">PERSONA</text>
-      <text x="110" y="80" fill="#f2f1e9" font-size="12" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif" text-anchor="middle">Usuario A</text>
-      <text x="110" y="89" fill="#6f766e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">última parte</text>
-      <rect x="220" y="48" width="152" height="44" rx="6" fill="#080909"/>
-      <rect x="220" y="48" width="152" height="44" rx="6" fill="#171a19" stroke="#343934" stroke-width="1"/>
-      <rect x="228" y="54" width="52" height="12" rx="2" fill="none" stroke="#6f766e" stroke-width="0.8"/>
-      <text x="254" y="63" fill="#6f766e" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">PERSONA</text>
-      <text x="296" y="80" fill="#f2f1e9" font-size="12" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif" text-anchor="middle">Usuario B</text>
-      <text x="296" y="89" fill="#6f766e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">última parte</text>
-      <rect x="464" y="48" width="152" height="44" rx="6" fill="#080909"/>
-      <rect x="464" y="48" width="152" height="44" rx="6" fill="#171a19" stroke="#343934" stroke-width="1"/>
-      <rect x="472" y="54" width="28" height="12" rx="2" fill="none" stroke="#6f766e" stroke-width="0.8"/>
-      <text x="486" y="63" fill="#6f766e" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
-      <text x="540" y="80" fill="#f2f1e9" font-size="12" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif" text-anchor="middle">API</text>
-      <text x="540" y="89" fill="#6f766e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">2 réplicas</text>
-      <rect x="724" y="48" width="152" height="44" rx="6" fill="#080909"/>
-      <rect x="724" y="48" width="152" height="44" rx="6" fill="#171a19" stroke="#343934" stroke-width="1"/>
-      <rect x="732" y="54" width="34" height="12" rx="2" fill="none" stroke="#6f766e" stroke-width="0.8"/>
-      <text x="749" y="63" fill="#6f766e" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">BASE</text>
-      <text x="800" y="80" fill="#f2f1e9" font-size="12" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif" text-anchor="middle">PostgreSQL</text>
-      <text x="800" y="89" fill="#6f766e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">data-01</text>
-      <rect x="980" y="48" width="152" height="44" rx="6" fill="#080909"/>
-      <rect x="980" y="48" width="152" height="44" rx="6" fill="#171a19" stroke="#343934" stroke-width="1"/>
-      <rect x="988" y="54" width="34" height="12" rx="2" fill="none" stroke="#6f766e" stroke-width="0.8"/>
-      <text x="1005" y="63" fill="#6f766e" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">HTTP</text>
-      <text x="1056" y="80" fill="#f2f1e9" font-size="12" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif" text-anchor="middle">Destino</text>
-      <text x="1056" y="89" fill="#6f766e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">notify-sink</text>
-      <line x1="110" y1="96" x2="110" y2="660" stroke="rgba(242,241,233,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
-      <line x1="296" y1="96" x2="296" y2="660" stroke="rgba(242,241,233,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
-      <line x1="540" y1="96" x2="540" y2="660" stroke="rgba(242,241,233,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
-      <line x1="800" y1="96" x2="800" y2="660" stroke="rgba(242,241,233,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
-      <line x1="1056" y1="96" x2="1056" y2="660" stroke="rgba(242,241,233,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
-      <rect x="536" y="228" width="8" height="116" fill="rgba(242,241,233,0.06)" stroke="#a7ada5" stroke-width="0.8"/>
-      <rect x="536" y="388" width="8" height="156" fill="rgba(242,241,233,0.06)" stroke="#a7ada5" stroke-width="0.8"/>
-      <rect x="496" y="416" width="620" height="152" rx="4" fill="rgba(242,241,233,0.04)" stroke="rgba(242,241,233,0.22)" stroke-width="1"/>
-      <rect x="496" y="416" width="40" height="16" rx="2" fill="#080909" stroke="rgba(242,241,233,0.22)" stroke-width="1"/>
-      <text x="516" y="428" fill="#a7ada5" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">OPT</text>
-      <text x="548" y="428" fill="#a7ada5" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.04em">[sólo si el UPDATE devolvió una fila]</text>
-      <path d="M 110 144 L 536 144" fill="none" stroke="#a7ada5" stroke-width="1" marker-end="url(#arrow)"/>
-      <path d="M 296 184 L 536 184" fill="none" stroke="#a7ada5" stroke-width="1" marker-end="url(#arrow)"/>
-      <path d="M 544 236 L 800 236" fill="none" stroke="#a7ada5" stroke-width="1" marker-end="url(#arrow)"/>
-      <path d="M 544 288 L 800 288" fill="none" stroke="#a7ada5" stroke-width="1" marker-end="url(#arrow)"/>
-      <path d="M 536 332 L 110 332" fill="none" stroke="#a7ada5" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
-      <path d="M 544 396 L 800 396" fill="none" stroke="#a7ada5" stroke-width="1" marker-end="url(#arrow)"/>
-      <path d="M 544 452 L 800 452" fill="none" stroke="#d7ff4f" stroke-width="2" marker-end="url(#arrow-accent)"/>
-      <path d="M 544 524 L 1056 524" fill="none" stroke="#a7ada5" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow-open)"/>
-      <path d="M 536 600 L 296 600" fill="none" stroke="#d7ff4f" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrow-accent)"/>
-      <line x1="556" y1="356" x2="556" y2="384" stroke="#d7ff4f" stroke-width="1"/>
-      <text x="566" y="366" fill="#f2f1e9" font-size="14" font-style="italic" font-family="'Khand', 'Arial Narrow', sans-serif">B espera aquí.</text>
-      <text x="566" y="382" fill="#a7ada5" font-size="8" font-family="'Geist Mono', ui-monospace, monospace">El lock de fila serializa ambas completions;</text>
-      <text x="566" y="394" fill="#a7ada5" font-size="8" font-family="'Geist Mono', ui-monospace, monospace">sin él, ninguna de las dos archivaría.</text>
-
-      <rect x="136" y="124" width="134" height="12" rx="2" fill="#080909"/>
-      <text x="203" y="133" fill="#a7ada5" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">POST /complete {userId: 1}</text>
-      <rect x="351" y="164" width="134" height="12" rx="2" fill="#080909"/>
-      <text x="418" y="173" fill="#a7ada5" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">POST /complete {userId: 2}</text>
-      <rect x="586" y="216" width="172" height="12" rx="2" fill="#080909"/>
-      <text x="672" y="225" fill="#a7ada5" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">SELECT tasks WHERE id=1 FOR UPDATE</text>
-      <rect x="598" y="268" width="148" height="12" rx="2" fill="#080909"/>
-      <text x="672" y="277" fill="#a7ada5" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">UPDATE ... archivar → 0 filas</text>
-      <rect x="131" y="312" width="144" height="12" rx="2" fill="#080909"/>
-      <text x="203" y="321" fill="#a7ada5" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">200 · tu parte está completa</text>
-      <rect x="596" y="376" width="153" height="12" rx="2" fill="#080909"/>
-      <text x="672" y="385" fill="#a7ada5" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">B obtiene el lock recién ahora</text>
-      <rect x="600" y="432" width="144" height="12" rx="2" fill="#080909"/>
-      <text x="672" y="441" fill="#d7ff4f" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">UPDATE ... archivar → 1 fila</text>
-      <rect x="842" y="504" width="172" height="12" rx="2" fill="#080909"/>
-      <text x="928" y="513" fill="#a7ada5" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">POST notificación · tras el commit</text>
-      <rect x="361" y="580" width="111" height="12" rx="2" fill="#080909"/>
-      <text x="416" y="589" fill="#d7ff4f" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">200 · tarea archivada</text>
-
-      <line x1="40" y1="692" x2="1160" y2="692" stroke="rgba(242,241,233,0.12)" stroke-width="0.8"/>
-      <text x="40" y="710" fill="#a7ada5" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">REFERENCIAS</text>
-      <line x1="130" y1="706" x2="166" y2="706" stroke="#a7ada5" stroke-width="1"/>
-      <text x="174" y="710" fill="#a7ada5" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">llamada</text>
-      <line x1="270" y1="706" x2="306" y2="706" stroke="#a7ada5" stroke-width="1" stroke-dasharray="5,4"/>
-      <text x="314" y="710" fill="#a7ada5" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">respuesta</text>
-      <line x1="430" y1="706" x2="466" y2="706" stroke="#a7ada5" stroke-width="1" stroke-dasharray="5,4"/>
-      <polyline points="460,703 466,706 460,709" fill="none" stroke="#a7ada5" stroke-width="1.2"/>
-      <text x="474" y="710" fill="#a7ada5" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">envío sin esperar respuesta</text>
-      <line x1="700" y1="706" x2="736" y2="706" stroke="#d7ff4f" stroke-width="2"/>
-      <text x="744" y="710" fill="#a7ada5" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">la decisión, y quién se la lleva</text>
+      <rect x="20" y="64" width="152" height="52" rx="6" fill="#171a19" stroke="#343934" stroke-width="1"/>
+      <text x="96" y="88" fill="#f2f1e9" font-size="15" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif" text-anchor="middle">Usuario A</text>
+      <text x="96" y="105" fill="#6f766e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">última parte</text>
+      <rect x="192" y="64" width="152" height="52" rx="6" fill="#171a19" stroke="#343934" stroke-width="1"/>
+      <text x="268" y="88" fill="#f2f1e9" font-size="15" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif" text-anchor="middle">Usuario B</text>
+      <text x="268" y="105" fill="#6f766e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">última parte</text>
+      <rect x="420" y="64" width="152" height="52" rx="6" fill="#171a19" stroke="#343934" stroke-width="1"/>
+      <text x="496" y="88" fill="#f2f1e9" font-size="15" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif" text-anchor="middle">API</text>
+      <text x="496" y="105" fill="#6f766e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">2 réplicas</text>
+      <rect x="660" y="64" width="152" height="52" rx="6" fill="#171a19" stroke="#343934" stroke-width="1"/>
+      <text x="736" y="88" fill="#f2f1e9" font-size="15" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif" text-anchor="middle">PostgreSQL</text>
+      <text x="736" y="105" fill="#6f766e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">data-01</text>
+      <rect x="848" y="64" width="152" height="52" rx="6" fill="#171a19" stroke="#343934" stroke-width="1"/>
+      <text x="924" y="88" fill="#f2f1e9" font-size="15" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif" text-anchor="middle">Destino</text>
+      <text x="924" y="105" fill="#6f766e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">notify-sink</text>
+      <line x1="96" y1="120" x2="96" y2="560" stroke="rgba(242,241,233,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="268" y1="120" x2="268" y2="560" stroke="rgba(242,241,233,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="496" y1="120" x2="496" y2="560" stroke="rgba(242,241,233,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="736" y1="120" x2="736" y2="560" stroke="rgba(242,241,233,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="924" y1="120" x2="924" y2="560" stroke="rgba(242,241,233,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <rect x="491" y="236" width="10" height="112" fill="rgba(242,241,233,0.06)" stroke="#a7ada5" stroke-width="0.9"/>
+      <rect x="491" y="392" width="10" height="104" fill="rgba(242,241,233,0.06)" stroke="#a7ada5" stroke-width="0.9"/>
+      <path d="M 96 160 L 491 160" fill="none" stroke="#a7ada5" stroke-width="1" marker-end="url(#arrow)"/>
+      <path d="M 268 200 L 491 200" fill="none" stroke="#a7ada5" stroke-width="1" marker-end="url(#arrow)"/>
+      <path d="M 501 252 L 736 252" fill="none" stroke="#a7ada5" stroke-width="1" marker-end="url(#arrow)"/>
+      <path d="M 501 312 L 736 312" fill="none" stroke="#a7ada5" stroke-width="1" marker-end="url(#arrow)"/>
+      <path d="M 501 424 L 736 424" fill="none" stroke="#d7ff4f" stroke-width="2" marker-end="url(#arrow-accent)"/>
+      <path d="M 501 520 L 924 520" fill="none" stroke="#a7ada5" stroke-width="1" stroke-dasharray="6,5" marker-end="url(#arrow-open)"/>
+      <line x1="518" y1="352" x2="518" y2="388" stroke="#d7ff4f" stroke-width="2"/>
+      <text x="530" y="368" fill="#f2f1e9" font-size="16" font-style="italic" font-family="'Khand', 'Arial Narrow', sans-serif">B espera aquí</text>
+      <text x="530" y="386" fill="#a7ada5" font-size="11" font-family="'Geist Mono', ui-monospace, monospace">el lock de fila las ordena</text>
+      <rect x="127" y="138" width="109" height="16" rx="2" fill="#080909"/>
+      <text x="182" y="150" fill="#a7ada5" font-size="12" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.03em">POST /complete</text>
+      <rect x="289" y="178" width="186" height="16" rx="2" fill="#080909"/>
+      <text x="382" y="190" fill="#a7ada5" font-size="12" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.03em">POST /complete · a la vez</text>
+      <rect x="546" y="230" width="144" height="16" rx="2" fill="#080909"/>
+      <text x="618" y="242" fill="#a7ada5" font-size="12" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.03em">SELECT … FOR UPDATE</text>
+      <rect x="518" y="290" width="200" height="16" rx="2" fill="#080909"/>
+      <text x="618" y="302" fill="#a7ada5" font-size="12" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.03em">UPDATE … archivar → 0 filas</text>
+      <rect x="522" y="402" width="193" height="16" rx="2" fill="#080909"/>
+      <text x="618" y="414" fill="#d7ff4f" font-size="12" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.03em">UPDATE … archivar → 1 fila</text>
+      <rect x="751" y="498" width="158" height="16" rx="2" fill="#080909"/>
+      <text x="830" y="510" fill="#a7ada5" font-size="12" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.03em">una sola notificación</text>
     </svg>

@@ -1,99 +1,74 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="workflow-deploy-title workflow-deploy-desc">
+<svg viewBox="0 0 880 570" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="workflow-deploy-title workflow-deploy-desc">
       <title id="workflow-deploy-title">Dónde corre la API</title>
-      <desc id="workflow-deploy-desc">Tres fronteras de red: internet, la red del homelab sobre Proxmox y la red de pods de Kubernetes. Una petición entra por el puerto 443 al host, que la redirige por DNAT al Gateway del cluster, y de ahí a dos réplicas de la aplicación. Cuando esas réplicas salen hacia PostgreSQL en data-01 cruzan de vuelta a la red del homelab y Cilium reescribe la dirección de origen, que es la razón por la que las reglas del firewall nombran a los nodos y no al rango de pods.</desc>
+      <desc id="workflow-deploy-desc">Tres fronteras de red: internet, la red del homelab sobre Proxmox y la red de pods de Kubernetes. Una petición entra por el 443 al host, que la redirige al Gateway del cluster y de ahí a dos réplicas de la aplicación. Al salir hacia PostgreSQL, esas réplicas cruzan de vuelta a la red del homelab y Cilium reescribe la dirección de origen.</desc>
       <defs>
   <style>@import url('https://fonts.googleapis.com/css2?family=Khand:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
-        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#a7ada5"/></marker>
-        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#d7ff4f"/></marker>
-        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#ff766c"/></marker>
+        <marker id="arrow" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#a7ada5"/></marker>
+        <marker id="arrow-accent" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#d7ff4f"/></marker>
+        <marker id="arrow-link" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#ff766c"/></marker>
+        <marker id="arrow-open" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polyline points="0 0, 9 3.5, 0 7" fill="none" stroke="#a7ada5" stroke-width="1.4"/></marker>
       </defs>
       <rect width="100%" height="100%" fill="#080909"/>
-
-      <rect x="40" y="56" width="1120" height="112" rx="8" fill="rgba(242,241,233,0.02)" stroke="rgba(242,241,233,0.20)" stroke-width="1" stroke-dasharray="4,4"/>
-      <rect x="56" y="50" width="56" height="12" rx="2" fill="#080909"/>
-      <text x="64" y="59" fill="#6f766e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">INTERNET</text>
-      <rect x="40" y="200" width="1120" height="136" rx="8" fill="rgba(242,241,233,0.02)" stroke="rgba(242,241,233,0.20)" stroke-width="1" stroke-dasharray="4,4"/>
-      <rect x="56" y="194" width="206" height="12" rx="2" fill="#080909"/>
-      <text x="64" y="203" fill="#6f766e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">RED DEL HOMELAB · vmbr10 10.10.10.0/24</text>
-      <rect x="40" y="368" width="1120" height="200" rx="8" fill="rgba(242,241,233,0.02)" stroke="rgba(242,241,233,0.20)" stroke-width="1" stroke-dasharray="4,4"/>
-      <rect x="56" y="362" width="151" height="12" rx="2" fill="#080909"/>
-      <text x="64" y="371" fill="#6f766e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">RED DE PODS · 10.244.0.0/16</text>
-
-      <path d="M 222 172 L 222 224" fill="none" stroke="#ff766c" stroke-width="1" marker-end="url(#arrow-link)"/>
-      <path d="M 222 316 L 222 400" fill="none" stroke="#ff766c" stroke-width="1" marker-end="url(#arrow-link)"/>
-      <path d="M 362 446 L 440 446" fill="none" stroke="#a7ada5" stroke-width="1" marker-end="url(#arrow)"/>
-      <path d="M 740 446 L 828 446" fill="none" stroke="#a7ada5" stroke-width="1" marker-end="url(#arrow)"/>
-      <path d="M 590 400 L 590 360 Q 590 352 598 352 L 952 352 Q 960 352 960 344 L 960 316" fill="none" stroke="#d7ff4f" stroke-width="2" marker-end="url(#arrow-accent)"/>
-
-      <rect x="232" y="186" width="54" height="12" rx="2" fill="#080909"/>
-      <text x="238" y="195" fill="#ff766c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.04em">HTTPS:443</text>
-      <rect x="232" y="346" width="101" height="12" rx="2" fill="#080909"/>
-      <text x="238" y="355" fill="#ff766c" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.04em">DNAT → 10.10.10.200</text>
-      <rect x="374" y="426" width="54" height="12" rx="2" fill="#080909"/>
-      <text x="401" y="435" fill="#a7ada5" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">HTTP:8080</text>
-      <rect x="757" y="426" width="54" height="12" rx="2" fill="#080909"/>
-      <text x="784" y="435" fill="#a7ada5" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">HTTP:8080</text>
-      <rect x="694" y="330" width="162" height="12" rx="2" fill="#080909"/>
-      <text x="775" y="339" fill="#d7ff4f" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">TLS:5432 · SNAT a la IP del nodo</text>
-
-      <rect x="72" y="80" width="300" height="92" rx="6" fill="#080909"/>
-      <rect x="72" y="80" width="300" height="92" rx="6" fill="#171a19" stroke="#343934" stroke-width="1"/>
-      <rect x="84" y="90" width="54" height="12" rx="2" fill="none" stroke="#6f766e" stroke-width="0.8"/>
-      <text x="111" y="99" fill="#6f766e" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">PÚBLICO</text>
-      <text x="84" y="122" fill="#f2f1e9" font-size="12" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif">Cliente</text>
-      <rect x="84" y="134" width="276" height="24" rx="4" fill="rgba(242,241,233,0.05)" stroke="#a7ada5" stroke-width="0.8"/>
-      <text x="94" y="150" fill="#f2f1e9" font-size="12" font-family="'Khand', 'Arial Narrow', sans-serif">workflow.camir.tech</text>
-      <text x="350" y="150" fill="#a7ada5" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">A → 54.39.29.90</text>
-      <rect x="72" y="224" width="300" height="92" rx="6" fill="#080909"/>
-      <rect x="72" y="224" width="300" height="92" rx="6" fill="#171a19" stroke="#343934" stroke-width="1"/>
-      <rect x="84" y="234" width="36" height="12" rx="2" fill="none" stroke="#6f766e" stroke-width="0.8"/>
-      <text x="102" y="243" fill="#6f766e" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">HOST</text>
-      <text x="84" y="266" fill="#f2f1e9" font-size="12" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif">pve01</text>
-      <rect x="84" y="278" width="276" height="24" rx="4" fill="rgba(242,241,233,0.05)" stroke="#a7ada5" stroke-width="0.8"/>
-      <text x="94" y="294" fill="#f2f1e9" font-size="12" font-family="'Khand', 'Arial Narrow', sans-serif">nftables</text>
-      <text x="350" y="294" fill="#a7ada5" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">DNAT 443</text>
-      <rect x="800" y="224" width="320" height="92" rx="6" fill="#080909"/>
-      <rect x="800" y="224" width="320" height="92" rx="6" fill="rgba(215,255,79,0.10)" stroke="#d7ff4f" stroke-width="1"/>
-      <rect x="812" y="234" width="30" height="12" rx="2" fill="none" stroke="#6f766e" stroke-width="0.8"/>
-      <text x="827" y="243" fill="#6f766e" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">LXC</text>
-      <text x="812" y="266" fill="#f2f1e9" font-size="12" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif">data-01</text>
-      <rect x="812" y="278" width="296" height="24" rx="4" fill="rgba(242,241,233,0.05)" stroke="#a7ada5" stroke-width="0.8"/>
-      <text x="822" y="294" fill="#f2f1e9" font-size="12" font-family="'Khand', 'Arial Narrow', sans-serif">postgresql</text>
-      <text x="1098" y="294" fill="#a7ada5" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">17</text>
-      <rect x="82" y="400" width="280" height="92" rx="6" fill="#080909"/>
-      <rect x="82" y="400" width="280" height="92" rx="6" fill="#171a19" stroke="#343934" stroke-width="1"/>
-      <rect x="94" y="410" width="30" height="12" rx="2" fill="none" stroke="#6f766e" stroke-width="0.8"/>
-      <text x="109" y="419" fill="#6f766e" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
-      <text x="94" y="442" fill="#f2f1e9" font-size="12" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif">Gateway</text>
-      <rect x="94" y="454" width="256" height="24" rx="4" fill="rgba(242,241,233,0.05)" stroke="#a7ada5" stroke-width="0.8"/>
-      <text x="104" y="470" fill="#f2f1e9" font-size="12" font-family="'Khand', 'Arial Narrow', sans-serif">cilium gateway</text>
-      <text x="340" y="470" fill="#a7ada5" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">10.10.10.200</text>
-      <rect x="440" y="400" width="300" height="92" rx="6" fill="#080909"/>
-      <rect x="440" y="400" width="300" height="92" rx="6" fill="#171a19" stroke="#343934" stroke-width="1"/>
-      <rect x="452" y="410" width="30" height="12" rx="2" fill="none" stroke="#6f766e" stroke-width="0.8"/>
-      <text x="467" y="419" fill="#6f766e" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
-      <rect x="702" y="410" width="26" height="12" rx="2" fill="none" stroke="#a7ada5" stroke-width="0.8"/>
-      <text x="715" y="419" fill="#a7ada5" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">x2</text>
-      <text x="452" y="442" fill="#f2f1e9" font-size="12" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif">workflow</text>
-      <rect x="452" y="454" width="276" height="24" rx="4" fill="rgba(242,241,233,0.05)" stroke="#a7ada5" stroke-width="0.8"/>
-      <text x="462" y="470" fill="#f2f1e9" font-size="12" font-family="'Khand', 'Arial Narrow', sans-serif">camircode/workflow</text>
-      <text x="718" y="470" fill="#a7ada5" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">@7171d5a</text>
-      <rect x="828" y="400" width="292" height="92" rx="6" fill="#080909"/>
-      <rect x="828" y="400" width="292" height="92" rx="6" fill="#171a19" stroke="#343934" stroke-width="1"/>
-      <rect x="840" y="410" width="30" height="12" rx="2" fill="none" stroke="#6f766e" stroke-width="0.8"/>
-      <text x="855" y="419" fill="#6f766e" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
-      <text x="840" y="442" fill="#f2f1e9" font-size="12" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif">notify-sink</text>
-      <rect x="840" y="454" width="268" height="24" rx="4" fill="rgba(242,241,233,0.05)" stroke="#a7ada5" stroke-width="0.8"/>
-      <text x="850" y="470" fill="#f2f1e9" font-size="12" font-family="'Khand', 'Arial Narrow', sans-serif">go-httpbin</text>
-      <text x="1098" y="470" fill="#a7ada5" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">@2073973</text>
-
-      <line x1="40" y1="616" x2="1160" y2="616" stroke="rgba(242,241,233,0.12)" stroke-width="0.8"/>
-      <text x="40" y="634" fill="#a7ada5" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">REFERENCIAS</text>
-      <line x1="130" y1="630" x2="166" y2="630" stroke="#ff766c" stroke-width="1"/>
-      <text x="174" y="634" fill="#a7ada5" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">cruza una frontera de red</text>
-      <line x1="410" y1="630" x2="446" y2="630" stroke="#a7ada5" stroke-width="1"/>
-      <text x="454" y="634" fill="#a7ada5" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">se queda dentro de la misma red</text>
-      <line x1="130" y1="654" x2="166" y2="654" stroke="#d7ff4f" stroke-width="2"/>
-      <text x="174" y="658" fill="#a7ada5" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">al salir de la red de pods, Cilium reescribe el origen: la base ve la IP del nodo, nunca la del pod</text>
+      <rect x="24" y="56" width="832" height="110" rx="8" fill="rgba(242,241,233,0.02)" stroke="rgba(242,241,233,0.20)" stroke-width="1" stroke-dasharray="4,4"/>
+      <rect x="40" y="48" width="66" height="16" rx="2" fill="#080909"/>
+      <text x="49" y="60" fill="#6f766e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">INTERNET</text>
+      <rect x="24" y="196" width="832" height="130" rx="8" fill="rgba(242,241,233,0.02)" stroke="rgba(242,241,233,0.20)" stroke-width="1" stroke-dasharray="4,4"/>
+      <rect x="40" y="188" width="204" height="16" rx="2" fill="#080909"/>
+      <text x="49" y="200" fill="#6f766e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">RED DEL HOMELAB · 10.10.10.0/24</text>
+      <rect x="24" y="356" width="832" height="130" rx="8" fill="rgba(242,241,233,0.02)" stroke="rgba(242,241,233,0.20)" stroke-width="1" stroke-dasharray="4,4"/>
+      <rect x="40" y="348" width="180" height="16" rx="2" fill="#080909"/>
+      <text x="49" y="360" fill="#6f766e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">RED DE PODS · 10.244.0.0/16</text>
+      <path d="M 300 166 L 300 216" fill="none" stroke="#ff766c" stroke-width="1" marker-end="url(#arrow-link)"/>
+      <path d="M 300 306 L 300 376" fill="none" stroke="#ff766c" stroke-width="1" marker-end="url(#arrow-link)"/>
+      <path d="M 368 421 L 520 421" fill="none" stroke="#a7ada5" stroke-width="1" marker-end="url(#arrow)"/>
+      <path d="M 676 376 L 676 306" fill="none" stroke="#d7ff4f" stroke-width="2" marker-end="url(#arrow-accent)"/>
+      <rect x="48" y="76" width="320" height="90" rx="6" fill="#080909"/>
+      <rect x="48" y="76" width="320" height="90" rx="6" fill="#171a19" stroke="#343934" stroke-width="1"/>
+      <text x="64" y="104" fill="#f2f1e9" font-size="15" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif">Cliente</text>
+      <text x="352" y="104" fill="#6f766e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.1em">PÚBLICO</text>
+      <rect x="64" y="118" width="288" height="32" rx="4" fill="rgba(242,241,233,0.05)" stroke="#a7ada5" stroke-width="0.8"/>
+      <text x="76" y="139" fill="#f2f1e9" font-size="14" font-family="'Khand', 'Arial Narrow', sans-serif">workflow.camir.tech</text>
+      <text x="340" y="139" fill="#a7ada5" font-size="11" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">54.39.29.90</text>
+      <rect x="48" y="216" width="320" height="90" rx="6" fill="#080909"/>
+      <rect x="48" y="216" width="320" height="90" rx="6" fill="#171a19" stroke="#343934" stroke-width="1"/>
+      <text x="64" y="244" fill="#f2f1e9" font-size="15" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif">pve01</text>
+      <text x="352" y="244" fill="#6f766e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.1em">HOST</text>
+      <rect x="64" y="258" width="288" height="32" rx="4" fill="rgba(242,241,233,0.05)" stroke="#a7ada5" stroke-width="0.8"/>
+      <text x="76" y="279" fill="#f2f1e9" font-size="14" font-family="'Khand', 'Arial Narrow', sans-serif">nftables</text>
+      <text x="340" y="279" fill="#a7ada5" font-size="11" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">DNAT 443</text>
+      <rect x="520" y="216" width="312" height="90" rx="6" fill="#080909"/>
+      <rect x="520" y="216" width="312" height="90" rx="6" fill="rgba(215,255,79,0.10)" stroke="#d7ff4f" stroke-width="1"/>
+      <text x="536" y="244" fill="#f2f1e9" font-size="15" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif">data-01</text>
+      <text x="816" y="244" fill="#6f766e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.1em">LXC</text>
+      <rect x="536" y="258" width="280" height="32" rx="4" fill="rgba(242,241,233,0.05)" stroke="#a7ada5" stroke-width="0.8"/>
+      <text x="548" y="279" fill="#f2f1e9" font-size="14" font-family="'Khand', 'Arial Narrow', sans-serif">postgresql</text>
+      <text x="804" y="279" fill="#a7ada5" font-size="11" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">17</text>
+      <rect x="48" y="376" width="320" height="90" rx="6" fill="#080909"/>
+      <rect x="48" y="376" width="320" height="90" rx="6" fill="#171a19" stroke="#343934" stroke-width="1"/>
+      <text x="64" y="404" fill="#f2f1e9" font-size="15" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif">Gateway</text>
+      <text x="352" y="404" fill="#6f766e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.1em">POD</text>
+      <rect x="64" y="418" width="288" height="32" rx="4" fill="rgba(242,241,233,0.05)" stroke="#a7ada5" stroke-width="0.8"/>
+      <text x="76" y="439" fill="#f2f1e9" font-size="14" font-family="'Khand', 'Arial Narrow', sans-serif">cilium gateway</text>
+      <text x="340" y="439" fill="#a7ada5" font-size="11" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">10.10.10.200</text>
+      <rect x="520" y="376" width="312" height="90" rx="6" fill="#080909"/>
+      <rect x="520" y="376" width="312" height="90" rx="6" fill="#171a19" stroke="#343934" stroke-width="1"/>
+      <text x="536" y="404" fill="#f2f1e9" font-size="15" font-weight="600" font-family="'Khand', 'Arial Narrow', sans-serif">workflow</text>
+      <text x="816" y="404" fill="#6f766e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.1em">POD · x2</text>
+      <rect x="536" y="418" width="280" height="32" rx="4" fill="rgba(242,241,233,0.05)" stroke="#a7ada5" stroke-width="0.8"/>
+      <text x="548" y="439" fill="#f2f1e9" font-size="14" font-family="'Khand', 'Arial Narrow', sans-serif">camircode/workflow</text>
+      <text x="804" y="439" fill="#a7ada5" font-size="11" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">@digest</text>
+      <rect x="312" y="183" width="75" height="16" rx="2" fill="#080909"/>
+      <text x="318" y="195" fill="#ff766c" font-size="12" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.03em">HTTPS:443</text>
+      <rect x="312" y="333" width="89" height="16" rx="2" fill="#080909"/>
+      <text x="318" y="345" fill="#ff766c" font-size="12" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.03em">DNAT → .200</text>
+      <rect x="380" y="392" width="75" height="16" rx="2" fill="#080909"/>
+      <text x="386" y="404" fill="#a7ada5" font-size="12" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.03em">HTTP:8080</text>
+      <rect x="688" y="333" width="68" height="16" rx="2" fill="#080909"/>
+      <text x="694" y="345" fill="#d7ff4f" font-size="12" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.03em">TLS:5432</text>
+<line x1="24" y1="512" x2="856" y2="512" stroke="rgba(242,241,233,0.12)" stroke-width="0.8"/>
+      <line x1="24" y1="534" x2="64" y2="534" stroke="#ff766c" stroke-width="1"/>
+      <text x="76" y="539" fill="#a7ada5" font-size="11" font-family="'Geist Mono', ui-monospace, monospace">cruza una frontera de red</text>
+      <line x1="360" y1="534" x2="400" y2="534" stroke="#d7ff4f" stroke-width="2"/>
+      <text x="412" y="539" fill="#a7ada5" font-size="11" font-family="'Geist Mono', ui-monospace, monospace">al cruzarla, Cilium reescribe el origen</text>
     </svg>

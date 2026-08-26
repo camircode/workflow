@@ -118,6 +118,90 @@ pipeline {
             }
         }
 
+        stage('Smoke test') {
+            steps {
+                // Arrancar la imagen antes de commitear su digest.
+                //
+                // Existe por un fallo concreto: una vez el pipeline construyó,
+                // escaneó y entregó a GitOps una imagen que no podía ejecutarse
+                // —le faltaba el package.json donde vive el mapa de subrutas— y
+                // se descubrió en el cluster, con el pod en CrashLoopBackOff. Que
+                // la API no se cayera fue mérito del rollout, que mantuvo los
+                // pods viejos sirviendo. El pipeline no lo vio.
+                //
+                // Los tests tampoco pueden verlo: corren sobre el código fuente,
+                // no sobre la imagen, y esa clase de fallo sólo aparece al
+                // arrancarla.
+                //
+                // Se ejecuta con el mismo usuario y el mismo sistema de archivos
+                // de sólo lectura que aplica el Deployment, porque "funciona como
+                // root" y "funciona como 10001 sin poder escribir" son cosas
+                // distintas.
+                //
+                // Por digest, no por tag: lo que se prueba es exactamente lo que
+                // se va a desplegar.
+                sh '''
+                    set -eu
+                    NET="smoke-$BUILD_NUMBER"
+                    DB="smoke-db-$BUILD_NUMBER"
+                    APP="smoke-app-$BUILD_NUMBER"
+
+                    cleanup() {
+                      docker logs "$APP" 2>&1 | tail -30 || true
+                      docker rm -f "$APP" "$DB" >/dev/null 2>&1 || true
+                      docker network rm "$NET" >/dev/null 2>&1 || true
+                    }
+                    trap cleanup EXIT
+
+                    docker network create "$NET"
+                    docker run -d --name "$DB" --network "$NET" \
+                      -e POSTGRES_PASSWORD=smoke -e POSTGRES_DB=workflow \
+                      postgres:17-alpine
+
+                    for i in $(seq 1 60); do
+                      docker exec "$DB" pg_isready -U postgres -d workflow >/dev/null 2>&1 && break
+                      sleep 1
+                    done
+
+                    docker pull "${IMAGE}@${IMAGE_DIGEST}"
+                    docker run -d --name "$APP" --network "$NET" \
+                      --user 10001:10001 --read-only --tmpfs /tmp \
+                      -e DATABASE_URL="postgresql://postgres:smoke@$DB:5432/workflow" \
+                      -e NOTIFY_URL="https://smoke.invalid/hook" \
+                      -e LISTEN_ADDR=":8080" \
+                      "${IMAGE}@${IMAGE_DIGEST}"
+
+                    # curl desde un contenedor en la misma red: el agente no
+                    # necesita tener curl ni un puerto publicado.
+                    probe() {
+                      docker run --rm --network "$NET" curlimages/curl:latest \
+                        -sS -o /dev/null -w '%{http_code}' --max-time 5 "http://$APP:8080$1"
+                    }
+
+                    ok=""
+                    for i in $(seq 1 45); do
+                      if [ "$(probe /health || true)" = "200" ]; then ok=yes; break; fi
+                      sleep 2
+                    done
+                    [ -n "$ok" ] || { echo "La imagen no llegó a responder en /health."; exit 1; }
+
+                    # /ready abre una transacción, así que prueba que las
+                    # migraciones corrieron y que el pool conecta.
+                    [ "$(probe /ready)" = "200" ] || { echo "/ready no responde 200."; exit 1; }
+
+                    # Y una escritura real, para cubrir enrutado, validación y base.
+                    code=$(docker run --rm --network "$NET" curlimages/curl:latest \
+                      -sS -o /dev/null -w '%{http_code}' --max-time 5 \
+                      -XPOST "http://$APP:8080/users" \
+                      -H 'content-type: application/json' \
+                      -d '{"name":"Smoke","lastName":"Test","email":"smoke@example.com"}')
+                    [ "$code" = "201" ] || { echo "POST /users respondió $code, se esperaba 201."; exit 1; }
+
+                    echo "Smoke test correcto: la imagen arranca, migra y sirve."
+                '''
+            }
+        }
+
         stage('Scan') {
             steps {
                 // After the push and before the GitOps commit, deliberately. An

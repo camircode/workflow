@@ -1,41 +1,41 @@
 import { z } from 'zod'
 
 /**
- * Configuration is read once, validated, and then it is a value. A missing or
- * malformed variable stops the process at startup with a message naming it,
- * rather than surfacing as an undefined halfway through the first request that
- * happens to need it.
+ * La configuración se lee una vez, se valida y a partir de ahí es un valor. Una
+ * variable ausente o malformada detiene el proceso en el arranque con un mensaje
+ * que la nombra, en lugar de aparecer como un undefined a mitad de la primera
+ * petición que resulte necesitarla.
  */
 const Schema = z.object({
-  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+  DATABASE_URL: z.string().min(1, 'DATABASE_URL es obligatoria'),
 
   /**
-   * Where the archived-task notification is POSTed. Required, and deliberately
-   * not defaulted: a default would make a misconfigured deployment look like a
-   * working one until somebody went looking for notifications that were never
-   * sent anywhere.
+   * Adonde se envía por POST la notificación de tarea archivada. Es obligatoria
+   * y deliberadamente no tiene valor por defecto: un valor por defecto haría que
+   * un despliegue mal configurado pareciera uno que funciona hasta que alguien
+   * fuera a buscar notificaciones que nunca se enviaron a ninguna parte.
    */
-  NOTIFY_URL: z.url('NOTIFY_URL must be a URL'),
+  NOTIFY_URL: z.url('NOTIFY_URL debe ser una URL'),
 
   PORT: z.coerce.number().int().positive().optional(),
   HOST: z.string().default('0.0.0.0'),
 
   /**
-   * The homelab's application scaffold sets LISTEN_ADDR=":8080" for every
-   * workload, a Go convention this project inherits rather than argues with.
-   * PORT wins when both are set, because that is what a Node process is expected
-   * to honour and what .env.example documents.
+   * El andamiaje de aplicaciones del homelab define LISTEN_ADDR=":8080" para
+   * toda carga de trabajo, una convención de Go que este proyecto hereda en vez
+   * de discutir. PORT gana cuando ambas están definidas, porque es lo que se
+   * espera que respete un proceso de Node y lo que documenta .env.example.
    */
   LISTEN_ADDR: z.string().optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 
-  /** How long to wait for the notification destination before calling it a failure. */
+  /** Cuánto esperar al destino de la notificación antes de darlo por fallido. */
   NOTIFY_TIMEOUT_MS: z.coerce.number().int().positive().default(5_000),
 
   /**
-   * Base for the backoff between notification attempts: attempt n waits
-   * base * 2^(n-1). Configurable so the tests do not spend real seconds
-   * proving that waiting happens.
+   * Base del backoff entre intentos de notificación: el intento n espera
+   * base * 2^(n-1). Es configurable para que las pruebas no gasten segundos
+   * reales demostrando que la espera ocurre.
    */
   NOTIFY_BACKOFF_MS: z.coerce.number().int().nonnegative().default(1_000),
 })
@@ -44,7 +44,7 @@ export type Config = Omit<z.infer<typeof Schema>, 'PORT' | 'LISTEN_ADDR'> & { PO
 
 const DEFAULT_PORT = 8080
 
-/** ":8080" and "0.0.0.0:8080" both mean 8080. */
+/** ":8080" y "0.0.0.0:8080" significan ambos 8080. */
 function portFromListenAddr(value: string | undefined): number | undefined {
   if (!value) return undefined
   const port = Number.parseInt(value.slice(value.lastIndexOf(':') + 1), 10)
@@ -57,11 +57,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     const problems = parsed.error.issues
       .map((issue) => `  ${issue.path.join('.') || '(root)'}: ${issue.message}`)
       .join('\n')
-    throw new Error(`Invalid configuration:\n${problems}`)
+    throw new Error(`Configuración inválida:\n${problems}`)
   }
   const { PORT, LISTEN_ADDR, ...rest } = parsed.data
   return { ...rest, PORT: PORT ?? portFromListenAddr(LISTEN_ADDR) ?? DEFAULT_PORT }
 }
 
-/** The most attempts the notification is given, per the reliability contract. */
+/** El máximo de intentos que se le concede a la notificación, según el contrato de fiabilidad. */
 export const MAX_NOTIFICATION_ATTEMPTS = 3

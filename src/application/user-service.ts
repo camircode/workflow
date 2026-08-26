@@ -12,9 +12,10 @@ export async function listTasksForUser(
   uow: UnitOfWork,
   userId: number,
 ): Promise<TaskForUser[]> {
-  // Checked rather than inferred from an empty result: a user with no tasks and
-  // a user who does not exist are different answers, and returning [] for both
-  // hides a typo in an id behind a plausible-looking success.
+  // Se comprueba en lugar de inferirse de un resultado vacío: un usuario sin
+  // tareas y un usuario que no existe son respuestas distintas, y devolver []
+  // para ambos esconde una errata en un id detrás de un éxito con toda la
+  // apariencia de serlo.
   const user = await uow.users.findById(userId)
   if (!user) throw userNotFound(userId)
 

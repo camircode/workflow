@@ -2,7 +2,7 @@ import type { ArchivedTask, Database, Notifier } from './ports.js'
 
 export interface DispatcherOptions {
   maxAttempts: number
-  /** Attempt n waits backoffMs * 2^(n-1) before it runs. */
+  /** El intento n espera backoffMs * 2^(n-1) antes de ejecutarse. */
   backoffMs: number
 }
 
@@ -10,16 +10,17 @@ const sleep = (ms: number): Promise<void> =>
   ms <= 0 ? Promise.resolve() : new Promise((resolve) => setTimeout(resolve, ms))
 
 /**
- * Delivers the archived-task notification, retrying with increasing waits, and
- * writing down every attempt whether it worked or not.
+ * Entrega la notificación de tarea archivada, reintentando con esperas
+ * crecientes y dejando constancia de cada intento, funcionara o no.
  *
- * Each attempt is recorded in its own transaction rather than all of them at the
- * end. A process that dies during the second attempt still leaves evidence of
- * the first, which is the difference between a record and a summary.
+ * Cada intento se registra en su propia transacción, y no todos ellos al final.
+ * Un proceso que muere durante el segundo intento sigue dejando evidencia del
+ * primero, que es la diferencia entre un registro y un resumen.
  *
- * Runs after the archiving transaction has committed, never inside it: holding a
- * database transaction open across a network call to somebody else's server ties
- * the lifetime of a row lock to how slow a stranger is.
+ * Se ejecuta después de que la transacción del archivado haya hecho commit,
+ * nunca dentro de ella: mantener abierta una transacción de base de datos
+ * durante una llamada de red al servidor de otro ata la duración de un lock de
+ * fila a lo lento que sea un extraño.
  */
 export class NotificationDispatcher {
   private readonly inFlight = new Set<Promise<void>>()
@@ -31,20 +32,20 @@ export class NotificationDispatcher {
   ) {}
 
   /**
-   * Starts delivery without waiting for it. The caller has already committed;
-   * making them wait out two backoffs to learn something they cannot act on
-   * would only make the request slower.
+   * Inicia la entrega sin esperar a que termine. El llamante ya ha hecho commit;
+   * hacerle esperar dos backoffs para enterarse de algo sobre lo que no puede
+   * actuar solo haría la petición más lenta.
    */
   dispatch(task: ArchivedTask): void {
     const run = this.deliver(task).catch(() => {
-      // deliver() records its own failures. Nothing here can do better than
-      // that, and an unhandled rejection would take the process down.
+      // deliver() registra sus propios fallos. Nada de lo que se haga aquí puede
+      // mejorar eso, y un rechazo no gestionado tumbaría el proceso.
     })
     this.inFlight.add(run)
     void run.finally(() => this.inFlight.delete(run))
   }
 
-  /** Waits for every delivery started so far. For tests and for shutdown. */
+  /** Espera a todas las entregas iniciadas hasta el momento. Para las pruebas y para el apagado. */
   async drain(): Promise<void> {
     while (this.inFlight.size > 0) {
       await Promise.all([...this.inFlight])
@@ -52,8 +53,8 @@ export class NotificationDispatcher {
   }
 
   /**
-   * Delivers now and waits. `dispatch` is this, without the waiting — the
-   * reconciler needs to know when it is finished, a request does not.
+   * Entrega ahora y espera. `dispatch` es esto mismo, sin la espera — el
+   * reconciliador necesita saber cuándo ha terminado, una petición no.
    */
   async deliver(task: ArchivedTask): Promise<void> {
     const payload = {
@@ -82,10 +83,10 @@ export class NotificationDispatcher {
         return
       }
 
-      // A 4xx is the destination saying the request itself is wrong. Sending the
-      // identical body twice more cannot change that answer, so only a 5xx or no
-      // answer at all is worth another attempt — which is what the contract asks
-      // for and also what is true.
+      // Un 4xx es el destino diciendo que la petición en sí está mal. Enviar el
+      // mismo cuerpo idéntico dos veces más no puede cambiar esa respuesta, así
+      // que solo un 5xx o la ausencia total de respuesta merecen otro intento —
+      // que es lo que pide el contrato y también lo que es cierto.
       const worthRetrying = outcome.httpStatus === null || outcome.httpStatus >= 500
       if (!worthRetrying) {
         return

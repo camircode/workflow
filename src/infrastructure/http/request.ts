@@ -2,9 +2,10 @@ import type { FastifyRequest } from 'fastify'
 import { IDEMPOTENCY_HEADER } from './idempotency.js'
 
 /**
- * A header can legally arrive more than once. Taking the first rather than
- * joining them means two different keys cannot combine into a third that matches
- * nothing — the request is treated as carrying the first key it presented.
+ * Una cabecera puede llegar legítimamente más de una vez. Tomar la primera en
+ * lugar de unirlas hace que dos claves distintas no puedan combinarse en una
+ * tercera que no coincida con nada: se considera que la petición lleva la
+ * primera clave que presentó.
  */
 export function idempotencyKeyOf(request: FastifyRequest): string | undefined {
   const raw = request.headers[IDEMPOTENCY_HEADER]

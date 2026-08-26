@@ -23,7 +23,7 @@ export const usersRoutes =
       {
         schema: {
           tags: ['users'],
-          summary: 'Register a user',
+          summary: 'Registrar un usuario',
           headers: IdempotencyHeaders,
           body: CreateUserBody,
           response: { 201: UserResponse, 400: ErrorResponse, 409: ErrorResponse },
@@ -47,7 +47,7 @@ export const usersRoutes =
       {
         schema: {
           tags: ['users'],
-          summary: 'List users with the tasks they still owe',
+          summary: 'Listar usuarios con las tareas que todavía deben',
           response: { 200: z.array(UserWithPendingTasksResponse) },
         },
       },
@@ -62,7 +62,7 @@ export const usersRoutes =
       {
         schema: {
           tags: ['users'],
-          summary: "List a user's tasks and whether their part is done",
+          summary: 'Listar las tareas de un usuario y si su parte está hecha',
           params: UserIdParams,
           response: { 200: z.array(TaskForUserResponse), 404: ErrorResponse },
         },

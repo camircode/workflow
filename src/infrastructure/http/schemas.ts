@@ -2,17 +2,18 @@ import { z } from 'zod'
 import { ERROR_CODES } from '../../domain/errors.js'
 
 /**
- * One definition per shape, used twice: to validate what arrives and to describe
- * the API at /docs.
+ * Una definición por forma, usada dos veces: para validar lo que llega y para
+ * describir la API en /docs.
  *
- * This is the whole point of the OpenAPI document being generated rather than
- * written. A hand-kept spec is a second source of truth that starts out correct
- * and drifts the first time someone changes a field and forgets — and a wrong
- * spec is worse than none, because it is believed.
+ * Este es justamente el motivo de que el documento OpenAPI se genere en lugar de
+ * escribirse. Una especificación mantenida a mano es una segunda fuente de verdad
+ * que empieza siendo correcta y se desvía la primera vez que alguien cambia un
+ * campo y se olvida — y una especificación equivocada es peor que ninguna, porque
+ * se cree.
  */
 
 const trimmed = (field: string) =>
-  z.string({ error: `${field} is required` }).trim().min(1, `${field} cannot be empty`)
+  z.string({ error: `${field} es obligatorio` }).trim().min(1, `${field} no puede estar vacío`)
 
 // --- requests ---------------------------------------------------------------
 
@@ -20,16 +21,16 @@ export const CreateUserBody = z
   .object({
     name: trimmed('name'),
     lastName: trimmed('lastName'),
-    email: z.email('email must be a valid address'),
+    email: z.email('email debe ser una dirección válida'),
   })
   .meta({ id: 'CreateUserBody' })
 
 export const CreateTaskBody = z
   .object({
     title: trimmed('title'),
-    // Optional by the specification. Absent and null both mean "no description",
-    // and both are stored as null rather than preserving a distinction the API
-    // would then have to explain.
+    // Opcional según la especificación. Ausente y null significan ambos "sin
+    // descripción", y ambos se guardan como null en lugar de preservar una
+    // distinción que la API tendría después que explicar.
     description: z.string().trim().nullish().transform((value) => value ?? null),
   })
   .meta({ id: 'CreateTaskBody' })
@@ -38,7 +39,7 @@ export const AssignBody = z
   .object({
     userIds: z
       .array(z.number().int().positive())
-      .min(1, 'userIds must contain at least one user'),
+      .min(1, 'userIds debe contener al menos un usuario'),
   })
   .meta({ id: 'AssignBody' })
 
@@ -119,7 +120,7 @@ export const NotificationAttemptResponse = z
   .object({
     attemptNumber: z.number().int(),
     attemptedAt: timestamp,
-    /** Null when the destination never answered: a timeout has no status code. */
+    /** Null cuando el destino nunca respondió: un timeout no tiene código de estado. */
     httpStatus: z.number().int().nullable(),
     error: z.string().nullable(),
   })
@@ -139,12 +140,12 @@ export const ErrorResponse = z
 export type ErrorBody = z.infer<typeof ErrorResponse>
 
 /**
- * Documented as a header rather than left implicit, because a reliability
- * feature nobody can see in the API description is a reliability feature nobody
- * uses.
+ * Documentada como cabecera en lugar de dejarse implícita, porque una
+ * característica de fiabilidad que nadie puede ver en la descripción de la API es
+ * una característica de fiabilidad que nadie usa.
  *
- * Loose, so that validating this one header does not strip every other header
- * off the request on the way past.
+ * Laxa, para que validar esta única cabecera no despoje a la petición de todas
+ * las demás cabeceras al pasar.
  */
 export const IdempotencyHeaders = z.looseObject({
   'idempotency-key': z
@@ -153,10 +154,10 @@ export const IdempotencyHeaders = z.looseObject({
     .optional()
     .meta({
       description:
-        'Send the same key with the same body twice and the operation happens ' +
-        'once; both responses are identical. Holds even when the two requests ' +
-        'arrive at the same instant. The same key with a different body is ' +
-        'refused with 409.',
+        'Envía la misma clave con el mismo cuerpo dos veces y la operación ocurre ' +
+        'una sola vez; ambas respuestas son idénticas. Se cumple incluso cuando las ' +
+        'dos peticiones llegan en el mismo instante. La misma clave con un cuerpo ' +
+        'distinto se rechaza con 409.',
     }),
 })
 

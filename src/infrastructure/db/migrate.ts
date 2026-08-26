@@ -4,28 +4,29 @@ import { Pool, type PoolClient } from 'pg'
 import './types.js'
 
 /**
- * Applies every migration in db/migrations that has not run yet, in filename
- * order, each in its own transaction.
+ * Aplica todas las migraciones de db/migrations que todavía no se han ejecutado,
+ * en orden de nombre de archivo, cada una en su propia transacción.
  *
- * The files are plain DDL: the transaction and the bookkeeping belong to the
- * runner, so a migration can also be read — or applied — on its own with psql.
+ * Los archivos son DDL a secas: la transacción y la contabilidad pertenecen al
+ * ejecutor, de modo que una migración también se puede leer — o aplicar — por su
+ * cuenta con psql.
  *
- * Serialised on an advisory lock, because the Deployment runs two replicas and
- * both start at once. Without it they race: one creates the tables, the other
- * fails on a relation that already exists, and the pod crash-loops until the
- * scheduler happens to sequence them. The second one blocks here instead, and
- * then finds there is nothing left to apply.
+ * Serializadas sobre un advisory lock, porque el Deployment ejecuta dos réplicas
+ * y ambas arrancan a la vez. Sin él compiten: una crea las tablas, la otra falla
+ * sobre una relación que ya existe, y el pod entra en crash-loop hasta que el
+ * planificador las secuencia por casualidad. La segunda se bloquea aquí en su
+ * lugar, y luego descubre que no queda nada por aplicar.
  */
 
-/** Any constant works; it only has to be the same in every replica. */
+/** Cualquier constante sirve; solo tiene que ser la misma en todas las réplicas. */
 const MIGRATION_LOCK = 'workflow:migrations'
 
 const MIGRATIONS_DIR = join(import.meta.dirname, '..', '..', '..', 'db', 'migrations')
 
 export async function migrate(client: PoolClient, dir = MIGRATIONS_DIR): Promise<string[]> {
-  // Session-scoped and blocking, not pg_try_advisory_lock: the loser must wait
-  // and then observe the result, not skip and start serving against a schema
-  // that is not there yet.
+  // Con alcance de sesión y bloqueante, no pg_try_advisory_lock: quien pierde
+  // debe esperar y después observar el resultado, no saltárselo y empezar a
+  // atender peticiones contra un esquema que todavía no está.
   await client.query('SELECT pg_advisory_lock(hashtextextended($1, 0))', [MIGRATION_LOCK])
   try {
     return await applyPending(client, dir)
@@ -61,7 +62,7 @@ async function applyPending(client: PoolClient, dir: string): Promise<string[]> 
       await client.query('COMMIT')
     } catch (error) {
       await client.query('ROLLBACK').catch(() => undefined)
-      throw new Error(`Migration ${version} failed: ${(error as Error).message}`, { cause: error })
+      throw new Error(`La migración ${version} falló: ${(error as Error).message}`, { cause: error })
     }
     ran.push(version)
   }
@@ -71,21 +72,21 @@ async function applyPending(client: PoolClient, dir: string): Promise<string[]> 
 /** `pnpm db:migrate` */
 async function main(): Promise<void> {
   const connectionString = process.env['DATABASE_URL']
-  if (!connectionString) throw new Error('DATABASE_URL is required')
+  if (!connectionString) throw new Error('DATABASE_URL es obligatoria')
 
   const pool = new Pool({ connectionString })
   const client = await pool.connect()
   try {
     const ran = await migrate(client)
-    console.log(ran.length === 0 ? 'Nothing to apply.' : `Applied: ${ran.join(', ')}`)
+    console.log(ran.length === 0 ? 'No hay nada que aplicar.' : `Aplicadas: ${ran.join(', ')}`)
   } finally {
     client.release()
     await pool.end()
   }
 }
 
-// Only when run directly, so importing migrate() from a test does not open a
-// connection to whatever DATABASE_URL happens to hold.
+// Solo cuando se ejecuta directamente, para que importar migrate() desde una
+// prueba no abra una conexión a lo que sea que contenga DATABASE_URL.
 if (process.argv[1] && import.meta.filename === process.argv[1]) {
   main().catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : error)

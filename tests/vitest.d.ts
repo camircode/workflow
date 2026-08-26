@@ -1,9 +1,9 @@
-// Declares what global setup hands to the test files, so inject('databaseUrl')
-// is typed rather than a string nobody checks.
+// Declara lo que el setup global entrega a los archivos de prueba, para que
+// inject('databaseUrl') esté tipado y no sea una cadena que nadie comprueba.
 //
-// In its own file, and importing 'vitest', because a module augmentation only
-// applies when the module being augmented is part of the program — and the setup
-// file itself imports from 'vitest/node', which is a different module.
+// En su propio archivo, e importando 'vitest', porque una ampliación de módulo
+// solo se aplica cuando el módulo ampliado forma parte del programa — y el
+// propio archivo de setup importa de 'vitest/node', que es un módulo distinto.
 import 'vitest'
 
 declare module 'vitest' {

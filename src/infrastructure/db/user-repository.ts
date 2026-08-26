@@ -17,9 +17,10 @@ export class PostgresUserRepository implements UserRepository {
       )
       return toUser(rows[0])
     } catch (error) {
-      // Asking first and inserting second would be a race: two registrations of
-      // the same address can both find it free. The index is the only thing that
-      // can decide, so it does, and this translates its answer.
+      // Preguntar primero e insertar después sería una condición de carrera: dos
+      // registros de la misma dirección pueden encontrarla libre ambos. El índice
+      // es lo único que puede decidir, así que decide, y esto traduce su
+      // respuesta.
       if (isUniqueViolation(error, 'users_email_lower_key')) {
         throw emailAlreadyRegistered(user.email)
       }
@@ -37,8 +38,8 @@ export class PostgresUserRepository implements UserRepository {
 
   async findMissingIds(ids: readonly number[]): Promise<number[]> {
     if (ids.length === 0) return []
-    // Every missing id at once, so a caller correcting four typos does not have
-    // to send four requests to find the next one.
+    // Todos los id que faltan de una vez, para que un llamante que corrige cuatro
+    // erratas no tenga que enviar cuatro peticiones para encontrar la siguiente.
     const { rows } = await this.client.query(
       `SELECT candidate AS id
          FROM unnest($1::bigint[]) AS candidate

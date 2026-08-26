@@ -1,11 +1,12 @@
 /**
- * Every failure this API can report, as a type rather than a string thrown from
- * somewhere in the middle of a query.
+ * Todos los fallos que esta API puede reportar, como un tipo y no como una
+ * cadena lanzada desde algún punto en medio de una consulta.
  *
- * The HTTP layer maps these to status codes; nothing below it knows what a
- * status code is. That is the whole point of keeping them here: a use case can
- * say "that user is not assigned to that task" without deciding whether that is
- * a 404 or a 409, which is a question about HTTP and not about the domain.
+ * La capa HTTP los mapea a códigos de estado; nada por debajo de ella sabe qué
+ * es un código de estado. Ese es justamente el motivo de mantenerlos aquí: un
+ * caso de uso puede decir "ese usuario no está asignado a esa tarea" sin decidir
+ * si eso es un 404 o un 409, que es una pregunta sobre HTTP y no sobre el
+ * dominio.
  */
 
 export const ERROR_CODES = [
@@ -36,31 +37,31 @@ export class DomainError extends Error {
 
 export const userNotFound = (id: number | number[]): DomainError =>
   Array.isArray(id)
-    ? new DomainError('USER_NOT_FOUND', `No user is registered with id ${id.join(', ')}.`)
-    : new DomainError('USER_NOT_FOUND', `No user is registered with id ${id}.`)
+    ? new DomainError('USER_NOT_FOUND', `No hay ningún usuario registrado con el id ${id.join(', ')}.`)
+    : new DomainError('USER_NOT_FOUND', `No hay ningún usuario registrado con el id ${id}.`)
 
 export const taskNotFound = (id: number): DomainError =>
-  new DomainError('TASK_NOT_FOUND', `No task is registered with id ${id}.`)
+  new DomainError('TASK_NOT_FOUND', `No hay ninguna tarea registrada con el id ${id}.`)
 
 export const userNotAssigned = (userId: number, taskId: number): DomainError =>
   new DomainError(
     'USER_NOT_ASSIGNED',
-    `User ${userId} is not assigned to task ${taskId}, so there is no part for them to complete.`,
+    `El usuario ${userId} no está asignado a la tarea ${taskId}, así que no tiene ninguna parte que completar.`,
   )
 
 export const taskAlreadyArchived = (id: number): DomainError =>
   new DomainError(
     'TASK_ALREADY_ARCHIVED',
-    `Task ${id} is archived. Everyone assigned to it has finished, so it no longer takes changes.`,
+    `La tarea ${id} está archivada. Todas las personas asignadas a ella han terminado, así que ya no admite cambios.`,
   )
 
 export const emailAlreadyRegistered = (email: string): DomainError =>
-  new DomainError('EMAIL_ALREADY_REGISTERED', `${email} is already registered.`)
+  new DomainError('EMAIL_ALREADY_REGISTERED', `${email} ya está registrado.`)
 
 export const idempotencyKeyReused = (key: string): DomainError =>
   new DomainError(
     'IDEMPOTENCY_KEY_REUSED',
-    `Idempotency-Key ${key} was already used on this endpoint with a different body. ` +
-      'A key identifies one request, so reusing it for another is refused rather than ' +
-      'answered with the earlier result.',
+    `La Idempotency-Key ${key} ya se usó en este endpoint con un cuerpo distinto. ` +
+      'Una clave identifica una petición, así que reutilizarla para otra se rechaza en lugar de ' +
+      'responderse con el resultado anterior.',
   )

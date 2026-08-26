@@ -26,7 +26,7 @@ import {
   TaskResponse,
 } from '../schemas.js'
 
-/** A task the moment it was created has no assignees yet. */
+/** Una tarea recién creada todavía no tiene personas asignadas. */
 const CreatedTaskResponse = TaskResponse
 
 export const tasksRoutes =
@@ -37,7 +37,7 @@ export const tasksRoutes =
       {
         schema: {
           tags: ['tasks'],
-          summary: 'Create a task',
+          summary: 'Crear una tarea',
           headers: IdempotencyHeaders,
           body: CreateTaskBody,
           response: { 201: CreatedTaskResponse, 400: ErrorResponse, 409: ErrorResponse },
@@ -64,7 +64,7 @@ export const tasksRoutes =
       {
         schema: {
           tags: ['tasks'],
-          summary: 'Assign users to a task',
+          summary: 'Asignar usuarios a una tarea',
           params: TaskIdParams,
           headers: IdempotencyHeaders,
           body: AssignBody,
@@ -86,7 +86,7 @@ export const tasksRoutes =
           200,
           async (uow) => {
             await assignUsers(uow, idTask, request.body.userIds)
-            return { body: { message: `Assigned to task ${idTask}.` } }
+            return { body: { message: `Asignados a la tarea ${idTask}.` } }
           },
         )
         return reply.status(result.status).send(result.body)
@@ -98,11 +98,11 @@ export const tasksRoutes =
       {
         schema: {
           tags: ['tasks'],
-          summary: "Mark one user's part of a task as done",
+          summary: 'Marcar como hecha la parte de un usuario en una tarea',
           description:
-            'When the last outstanding part is completed the task becomes archived ' +
-            'and the notification is sent — each exactly once, however many callers ' +
-            'complete at the same instant.',
+            'Cuando se completa la última parte pendiente, la tarea pasa a estar ' +
+            'archivada y se envía la notificación — cada cosa exactamente una vez, ' +
+            'por muchos llamantes que completen en el mismo instante.',
           params: TaskIdParams,
           headers: IdempotencyHeaders,
           body: CompleteBody,
@@ -127,11 +127,12 @@ export const tasksRoutes =
             return {
               body: {
                 message: archived
-                  ? `Task ${idTask} is complete and has been archived.`
-                  : `Your part of task ${idTask} is complete.`,
+                  ? `La tarea ${idTask} está completa y ha sido archivada.`
+                  : `Tu parte de la tarea ${idTask} está completa.`,
               },
-              // Only the caller that archived it gets here, so the notification
-              // is sent once no matter how many completions arrived together.
+              // Solo llega aquí el llamante que la archivó, así que la
+              // notificación se envía una vez por muchas compleciones que hayan
+              // llegado juntas.
               ...(archived ? { afterCommit: () => dispatcher.dispatch(archived) } : {}),
             }
           },
@@ -145,7 +146,7 @@ export const tasksRoutes =
       {
         schema: {
           tags: ['tasks'],
-          summary: 'List tasks, optionally filtered by status',
+          summary: 'Listar tareas, opcionalmente filtradas por estado',
           querystring: ListTasksQuery,
           response: { 200: z.array(TaskResponse), 400: ErrorResponse },
         },
@@ -161,7 +162,7 @@ export const tasksRoutes =
       {
         schema: {
           tags: ['tasks'],
-          summary: 'Read one task with everyone assigned to it',
+          summary: 'Leer una tarea con todas las personas asignadas a ella',
           params: TaskIdParams,
           response: { 200: TaskResponse, 404: ErrorResponse },
         },
@@ -177,7 +178,7 @@ export const tasksRoutes =
       {
         schema: {
           tags: ['tasks'],
-          summary: 'Every attempt made to notify the client system for this task',
+          summary: 'Todos los intentos hechos para notificar al sistema cliente sobre esta tarea',
           params: TaskIdParams,
           response: { 200: z.array(NotificationAttemptResponse), 404: ErrorResponse },
         },

@@ -13,26 +13,28 @@ import { buildServer } from '../src/infrastructure/http/server.js'
 import '../src/infrastructure/db/types.js'
 
 /**
- * A destination that answers whatever a test tells it to, and remembers what it
- * was sent.
+ * Un destino que responde lo que una prueba le indique, y recuerda lo que se le
+ * envió.
  *
- * Scripted per attempt rather than one fixed answer, because the interesting
- * cases are the ones where the answer changes: fails, fails, succeeds.
+ * Guionizado por intento en lugar de una única respuesta fija, porque los casos
+ * interesantes son aquellos en los que la respuesta cambia: falla, falla,
+ * funciona.
  */
 export class FakeNotifier implements Notifier {
   readonly received: ArchivedTaskNotification[] = []
   private readonly scripted: NotificationOutcome[] = []
   private fallback: NotificationOutcome = { httpStatus: 200, error: null }
 
-  /** Forgets everything. One harness serves a whole file, so state has to be
-   * cleared between tests or a later test counts an earlier test's deliveries. */
+  /** Lo olvida todo. Un mismo harness sirve a un archivo entero, así que el
+   * estado tiene que limpiarse entre pruebas o una prueba posterior contará las
+   * entregas de una anterior. */
   reset(): this {
     this.received.length = 0
     this.scripted.length = 0
     return this
   }
 
-  /** Answers for attempt 1, 2, 3 … in order. */
+  /** Respuestas para el intento 1, 2, 3 … en orden. */
   script(...outcomes: NotificationOutcome[]): this {
     this.scripted.push(...outcomes)
     return this
@@ -54,7 +56,7 @@ export interface Harness {
   db: Database
   notifier: FakeNotifier
   dispatcher: NotificationDispatcher
-  /** Waits for notifications started by requests already answered. */
+  /** Espera a las notificaciones iniciadas por peticiones ya respondidas. */
   settle(): Promise<void>
   close(): Promise<void>
 }
@@ -63,9 +65,9 @@ export async function startHarness(notifier = new FakeNotifier()): Promise<Harne
   const db = createDatabase(inject('databaseUrl'))
   const dispatcher = new NotificationDispatcher(db, notifier, {
     maxAttempts: 3,
-    // Zero, so proving that three attempts happen does not cost three seconds.
-    // What is under test is that they happen and are recorded, not that
-    // setTimeout works.
+    // Cero, para que demostrar que ocurren tres intentos no cueste tres segundos.
+    // Lo que se está probando es que ocurren y quedan registrados, no que
+    // setTimeout funcione.
     backoffMs: 0,
   })
   const app = await buildServer({ db, dispatcher, logLevel: 'silent' })
@@ -86,9 +88,9 @@ export async function startHarness(notifier = new FakeNotifier()): Promise<Harne
 }
 
 /**
- * Empties every table between tests. RESTART IDENTITY as well, so ids are
- * predictable and a test can say "user 1" instead of threading the id it just
- * created through every assertion.
+ * Vacía todas las tablas entre pruebas. También RESTART IDENTITY, para que los id
+ * sean predecibles y una prueba pueda decir "usuario 1" en lugar de ir pasando
+ * por cada aserción el id que acaba de crear.
  */
 export async function resetDatabase(): Promise<void> {
   const pool = new Pool({ connectionString: inject('databaseUrl') })
@@ -102,7 +104,7 @@ export async function resetDatabase(): Promise<void> {
   }
 }
 
-/** Fastify's inject, with the JSON already parsed. */
+/** El inject de Fastify, con el JSON ya parseado. */
 export async function request(
   app: FastifyInstance,
   options: InjectOptions,

@@ -23,13 +23,14 @@ export interface ServerDeps {
 export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
   const app = Fastify({
     logger: { level: deps.logLevel ?? 'info' },
-    // Behind a Gateway that terminates TLS, so the client address and protocol
-    // arrive in headers. Without this every log line records the proxy.
+    // Detrás de un Gateway que termina TLS, así que la dirección del cliente y el
+    // protocolo llegan en cabeceras. Sin esto cada línea de log registra al proxy.
     trustProxy: true,
   }).withTypeProvider<ZodTypeProvider>()
 
-  // The same Zod schemas validate requests and describe the API. There is no
-  // second document to keep in step, because there is no second document.
+  // Los mismos esquemas de Zod validan las peticiones y describen la API. No hay
+  // un segundo documento que mantener sincronizado, porque no hay un segundo
+  // documento.
   app.setValidatorCompiler(validatorCompiler)
   app.setSerializerCompiler(serializerCompiler)
 
@@ -39,31 +40,32 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     openapi: {
       openapi: '3.1.0',
       info: {
-        title: 'Workflow API',
+        title: 'API de Workflow',
         version: '1.0.0',
         description:
-          'Work management for teams: tasks are assigned to several people, each ' +
-          'marks their own part done, and the task archives itself — exactly once — ' +
-          'when the last one finishes.\n\n' +
-          'Every POST accepts an `Idempotency-Key` header. Sending the same key with ' +
-          'the same body twice performs the operation once and answers identically ' +
-          'both times, including when the two requests arrive together.',
+          'Gestión de trabajo para equipos: las tareas se asignan a varias personas, ' +
+          'cada una marca su propia parte como hecha, y la tarea se archiva sola ' +
+          '— exactamente una vez — cuando termina la última.\n\n' +
+          'Todo POST acepta una cabecera `Idempotency-Key`. Enviar la misma clave con ' +
+          'el mismo cuerpo dos veces realiza la operación una vez y responde de forma ' +
+          'idéntica ambas veces, incluso cuando las dos peticiones llegan a la vez.',
       },
       tags: [
-        { name: 'users', description: 'People who can be assigned work' },
-        { name: 'tasks', description: 'Work, who owes it, and what happened when it finished' },
-        { name: 'health', description: 'Liveness and readiness' },
+        { name: 'users', description: 'Personas a las que se puede asignar trabajo' },
+        { name: 'tasks', description: 'El trabajo, quién lo debe y qué ocurrió cuando terminó' },
+        { name: 'health', description: 'Liveness y readiness' },
       ],
     },
     transform: jsonSchemaTransform,
-    // Named models under components/schemas rather than the same object inlined
-    // at a dozen call sites. It reads the ids the schemas registered through
-    // .meta({ id }), so naming a model and publishing it are one act.
+    // Modelos con nombre bajo components/schemas en lugar del mismo objeto en
+    // línea en una docena de sitios. Lee los id que los esquemas registraron a
+    // través de .meta({ id }), de modo que nombrar un modelo y publicarlo son un
+    // único acto.
     transformObject: jsonSchemaTransformObject,
   })
 
-  // The document itself, at a stable path. /docs is for a person; this is for
-  // anything that generates a client.
+  // El documento en sí, en una ruta estable. /docs es para una persona; esto es
+  // para cualquier cosa que genere un cliente.
   app.get('/openapi.json', { schema: { hide: true } }, async () => app.swagger())
 
   await app.register(fastifySwaggerUi, {
@@ -71,15 +73,15 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     uiConfig: { docExpansion: 'list', deepLinking: true },
   })
 
-  // Liveness: is this process wedged. Deliberately touches nothing else — a
-  // container killed because its database is slow does not help anybody, and
-  // restarting it makes the database slower.
+  // Liveness: si este proceso está atascado. Deliberadamente no toca nada más —
+  // un contenedor eliminado porque su base de datos va lenta no ayuda a nadie, y
+  // reiniciarlo hace que la base de datos vaya aún más lenta.
   app.get('/health', { schema: { tags: ['health'], summary: 'Liveness' } }, async () => ({
     status: 'ok',
   }))
 
-  // Readiness: can this pod serve a request right now. It cannot without the
-  // database, so this is the one that asks.
+  // Readiness: si este pod puede atender una petición ahora mismo. No puede sin la
+  // base de datos, así que este es el que pregunta.
   app.get('/ready', { schema: { tags: ['health'], summary: 'Readiness' } }, async (_req, reply) => {
     try {
       await deps.db.transaction(async () => undefined)

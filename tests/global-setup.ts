@@ -4,12 +4,13 @@ import type { TestProject } from 'vitest/node'
 import { migrate } from '../src/infrastructure/db/migrate.js'
 
 /**
- * A real PostgreSQL, started once for the whole run.
+ * Un PostgreSQL real, arrancado una sola vez para toda la ejecución.
  *
- * Not a mock and not SQLite. Everything this project promises about behaving
- * correctly under concurrent requests is enforced by PostgreSQL — row locks,
- * advisory locks, a conditional UPDATE that only one transaction can win. A
- * fake would agree with every one of those claims without testing any of them.
+ * Ni un mock ni SQLite. Todo lo que este proyecto promete sobre comportarse
+ * correctamente bajo peticiones concurrentes lo impone PostgreSQL — locks de
+ * fila, advisory locks, un UPDATE condicional que solo una transacción puede
+ * ganar. Un doble daría la razón a cada una de esas afirmaciones sin probar
+ * ninguna de ellas.
  */
 let container: StartedPostgreSqlContainer
 
@@ -17,8 +18,9 @@ export default async function setup(project: TestProject) {
   container = await new PostgreSqlContainer('postgres:17-alpine').start()
   const url = container.getConnectionUri()
 
-  // Migrated here rather than per file, so the tests exercise the same schema
-  // the migration runner produces — not a second definition kept beside it.
+  // Se migra aquí y no por archivo, para que las pruebas ejerciten el mismo
+  // esquema que produce el ejecutor de migraciones — y no una segunda definición
+  // mantenida junto a él.
   const pool = new Pool({ connectionString: url })
   const client = await pool.connect()
   try {

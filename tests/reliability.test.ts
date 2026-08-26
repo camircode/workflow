@@ -4,13 +4,14 @@ import { inject } from 'vitest'
 import { FakeNotifier, request, resetDatabase, startHarness, type Harness } from './harness.js'
 
 /**
- * The reliability contract, which is the part of this API that is actually hard.
+ * El contrato de fiabilidad, que es la parte de esta API que de verdad es
+ * difícil.
  *
- * Every test here sends requests that overlap on purpose. A suite that only ever
- * sends one request at a time would pass against an implementation with none of
- * these guarantees.
+ * Todas las pruebas de aquí envían peticiones que se solapan a propósito. Una
+ * batería que solo enviara una petición cada vez pasaría contra una
+ * implementación que no tuviera ninguna de estas garantías.
  */
-describe('reliability', () => {
+describe('fiabilidad', () => {
   let h: Harness
 
   beforeAll(async () => {
@@ -32,8 +33,8 @@ describe('reliability', () => {
   const createTask = (title = 'A task') =>
     request(h.app, { method: 'POST', url: '/tasks', payload: { title } })
 
-  describe('idempotency', () => {
-    it('performs the operation once when the same key and body arrive twice in sequence', async () => {
+  describe('idempotencia', () => {
+    it('realiza la operación una sola vez cuando la misma clave y el mismo cuerpo llegan dos veces en secuencia', async () => {
       const key = 'seq-1'
       const first = await request(h.app, {
         method: 'POST',
@@ -56,10 +57,10 @@ describe('reliability', () => {
       expect(all.body).toHaveLength(1)
     })
 
-    it('performs the operation once when the same key and body arrive in parallel', async () => {
-      // The case the specification calls out, and the one a naive
-      // check-then-insert fails: neither request can see the other's row,
-      // because neither has committed.
+    it('realiza la operación una sola vez cuando la misma clave y el mismo cuerpo llegan en paralelo', async () => {
+      // El caso que señala la especificación, y aquel en el que falla un
+      // comprobar-y-luego-insertar ingenuo: ninguna de las dos peticiones puede
+      // ver la fila de la otra, porque ninguna ha hecho commit.
       const key = 'parallel-1'
       const send = () =>
         request(h.app, {
@@ -79,7 +80,7 @@ describe('reliability', () => {
       expect(all.body).toHaveLength(1)
     })
 
-    it('replays the same answer for a completing user, without completing twice', async () => {
+    it('reproduce la misma respuesta para un usuario que completa, sin completar dos veces', async () => {
       await createUser('one@example.com')
       const task = await createTask()
       await request(h.app, {
@@ -101,11 +102,11 @@ describe('reliability', () => {
       await h.settle()
 
       expect(a.body).toEqual(b.body)
-      // One archive means one notification, not two.
+      // Un archivado significa una notificación, no dos.
       expect(h.notifier.received).toHaveLength(1)
     })
 
-    it('refuses a key reused with a different body', async () => {
+    it('rechaza una clave reutilizada con un cuerpo distinto', async () => {
       const key = 'reused-1'
       await request(h.app, {
         method: 'POST',
@@ -124,7 +125,7 @@ describe('reliability', () => {
       expect(second.body.error.code).toBe('IDEMPOTENCY_KEY_REUSED')
     })
 
-    it('treats the same body with different key order as the same request', async () => {
+    it('trata el mismo cuerpo con distinto orden de claves como la misma petición', async () => {
       await createUser('a@example.com')
       const key = 'order-1'
       const a = await request(h.app, {
@@ -143,19 +144,19 @@ describe('reliability', () => {
       expect(b.body).toEqual(a.body)
     })
 
-    it('does not require the header', async () => {
+    it('no exige la cabecera', async () => {
       const a = await createTask('No key')
       const b = await createTask('No key')
       expect(a.status).toBe(201)
       expect(b.status).toBe(201)
-      // Without a key there is nothing to deduplicate against, and pretending
-      // otherwise would silently drop a genuine second request.
+      // Sin clave no hay nada contra lo que deduplicar, y fingir lo contrario
+      // descartaría en silencio una segunda petición legítima.
       expect(b.body.id).not.toBe(a.body.id)
     })
   })
 
-  describe('archiving without duplicates', () => {
-    it('archives exactly once when the last two users finish simultaneously', async () => {
+  describe('archivado sin duplicados', () => {
+    it('archiva exactamente una vez cuando los dos últimos usuarios terminan a la vez', async () => {
       await createUser('one@example.com')
       await createUser('two@example.com')
       const task = await createTask('Race')
@@ -178,8 +179,8 @@ describe('reliability', () => {
       expect(a.status).toBe(200)
       expect(b.status).toBe(200)
 
-      // Exactly one of the two callers is told it archived the task.
-      const announced = [a, b].filter((r) => r.body.message.includes('archived'))
+      // A exactamente uno de los dos llamantes se le dice que archivó la tarea.
+      const announced = [a, b].filter((r) => r.body.message.includes('archivada'))
       expect(announced).toHaveLength(1)
 
       const after = await request(h.app, { method: 'GET', url: `/tasks/${task.body.id}` })
@@ -190,14 +191,14 @@ describe('reliability', () => {
       expect(h.notifier.received[0]).toMatchObject({ taskId: task.body.id, title: 'Race' })
     })
 
-    it('does not archive a task nobody is assigned to', async () => {
-      // No outstanding parts is not the same as finished.
+    it('no archiva una tarea a la que no hay nadie asignado', async () => {
+      // No tener partes pendientes no es lo mismo que estar terminada.
       const task = await createTask('Nobody')
       const listed = await request(h.app, { method: 'GET', url: '/tasks?status=open' })
       expect(listed.body.map((t: { id: number }) => t.id)).toContain(task.body.id)
     })
 
-    it('archives once when many users finish at the same moment', async () => {
+    it('archiva una sola vez cuando muchos usuarios terminan en el mismo momento', async () => {
       const count = 8
       for (let i = 1; i <= count; i++) await createUser(`u${i}@example.com`)
       const task = await createTask('Everyone at once')
@@ -219,7 +220,7 @@ describe('reliability', () => {
       await h.settle()
 
       expect(results.every((r) => r.status === 200)).toBe(true)
-      expect(results.filter((r) => r.body.message.includes('archived'))).toHaveLength(1)
+      expect(results.filter((r) => r.body.message.includes('archivada'))).toHaveLength(1)
       expect(h.notifier.received).toHaveLength(1)
 
       const pool = new Pool({ connectionString: inject('databaseUrl') })
@@ -235,7 +236,7 @@ describe('reliability', () => {
     })
   })
 
-  describe('notification retries', () => {
+  describe('reintentos de notificación', () => {
     const setUpArchivedTask = async (harness: Harness) => {
       await request(harness.app, {
         method: 'POST',
@@ -261,7 +262,7 @@ describe('reliability', () => {
       return task.body.id as number
     }
 
-    it('stops at three attempts when the destination keeps failing', async () => {
+    it('se detiene a los tres intentos cuando el destino sigue fallando', async () => {
       const notifier = new FakeNotifier().always({ httpStatus: 503, error: 'unavailable' })
       const harness = await startHarness(notifier)
       try {
@@ -279,8 +280,8 @@ describe('reliability', () => {
       }
     })
 
-    it('records a timeout as an attempt with no status code', async () => {
-      const notifier = new FakeNotifier().always({ httpStatus: null, error: 'No answer within 5000ms.' })
+    it('registra un timeout como un intento sin código de estado', async () => {
+      const notifier = new FakeNotifier().always({ httpStatus: null, error: 'Sin respuesta en 5000ms.' })
       const harness = await startHarness(notifier)
       try {
         const taskId = await setUpArchivedTask(harness)
@@ -290,13 +291,13 @@ describe('reliability', () => {
         })
         expect(attempts.body).toHaveLength(3)
         expect(attempts.body[0].httpStatus).toBeNull()
-        expect(attempts.body[0].error).toContain('No answer')
+        expect(attempts.body[0].error).toContain('Sin respuesta')
       } finally {
         await harness.close()
       }
     })
 
-    it('stops as soon as the destination accepts it', async () => {
+    it('se detiene en cuanto el destino la acepta', async () => {
       const notifier = new FakeNotifier().script(
         { httpStatus: 500, error: 'boom' },
         { httpStatus: 204, error: null },
@@ -315,7 +316,7 @@ describe('reliability', () => {
       }
     })
 
-    it('does not retry a 4xx, because the answer will not change', async () => {
+    it('no reintenta ante un 4xx, porque la respuesta no va a cambiar', async () => {
       const notifier = new FakeNotifier().always({ httpStatus: 400, error: 'bad payload' })
       const harness = await startHarness(notifier)
       try {

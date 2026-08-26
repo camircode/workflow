@@ -6,11 +6,11 @@ import { PostgresTaskRepository } from './task-repository.js'
 import { PostgresUserRepository } from './user-repository.js'
 
 /**
- * Postgres returns bigint as a string, because a 64-bit integer does not fit in
- * a JavaScript number. Every id in this schema is a bigint and every one of them
- * is far below 2^53, so they are read as numbers — deliberately, and only
- * because the alternative is an API whose ids are strings for a reason no
- * consumer can see.
+ * Postgres devuelve bigint como cadena, porque un entero de 64 bits no cabe en
+ * un número de JavaScript. Todos los id de este esquema son bigint y todos ellos
+ * quedan muy por debajo de 2^53, así que se leen como números — deliberadamente,
+ * y solo porque la alternativa es una API cuyos id son cadenas por un motivo que
+ * ningún consumidor puede ver.
  */
 const BIGINT_OID = 20
 
@@ -26,8 +26,9 @@ export function createDatabase(connectionString: string): Database {
         await client.query('COMMIT')
         return result
       } catch (error) {
-        // Best effort: if the connection itself is what failed, the rollback
-        // fails too, and the original error is the one worth reporting.
+        // Se hace lo que se puede: si lo que falló es la conexión misma, el
+        // rollback falla también, y el error original es el que merece
+        // reportarse.
         await client.query('ROLLBACK').catch(() => undefined)
         throw error
       } finally {
@@ -52,8 +53,8 @@ export function createDatabase(connectionString: string): Database {
             .catch(() => undefined)
         }
       } finally {
-        // Releasing the connection would drop the lock with it, so this happens
-        // only after the unlock above.
+        // Liberar la conexión soltaría el lock con ella, así que esto ocurre
+        // solo después del unlock de arriba.
         client.release()
       }
     },
@@ -68,7 +69,7 @@ const unitOfWork = (client: PoolClient): UnitOfWork => ({
   idempotency: new PostgresIdempotencyStore(client),
 })
 
-/** Applies pending migrations on a connection of its own, then closes it. */
+/** Aplica las migraciones pendientes sobre una conexión propia y luego la cierra. */
 export async function runMigrations(connectionString: string): Promise<string[]> {
   const pool = new Pool({ connectionString })
   const client = await pool.connect()

@@ -10,3 +10,6 @@ coverage/
 # Marcador local de la skill de diagramas: apunta a un perfil de marca que vive
 # en ~/.diagram-design y no viaja con el repositorio.
 .diagram-design
+
+# Almacén local de pnpm, si alguna vez se instala dentro de un contenedor.
+.pnpm-store/

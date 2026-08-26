@@ -1,9 +1,11 @@
 /**
- * What the use cases need from the outside world, stated as interfaces they own.
+ * Lo que los casos de uso necesitan del mundo exterior, expresado como
+ * interfaces de las que ellos son dueños.
  *
- * The adapters in src/infrastructure implement these. Nothing here imports pg,
- * fastify or node:http — which is what makes the use cases testable without any
- * of them, and what makes replacing PostgreSQL a question about one directory.
+ * Los adaptadores de src/infrastructure las implementan. Nada de aquí importa
+ * pg, fastify ni node:http — que es lo que hace que los casos de uso se puedan
+ * probar sin ninguno de ellos, y lo que convierte reemplazar PostgreSQL en una
+ * pregunta sobre un único directorio.
  */
 
 import type {
@@ -18,8 +20,9 @@ import type {
 } from '../domain/model.js'
 
 /**
- * A unit of work. Every use case that changes more than one row runs inside one
- * of these, so a failure halfway through leaves nothing behind.
+ * Una unidad de trabajo. Todo caso de uso que modifique más de una fila se
+ * ejecuta dentro de una de estas, de modo que un fallo a mitad de camino no deje
+ * nada atrás.
  */
 export interface UnitOfWork {
   users: UserRepository
@@ -28,15 +31,15 @@ export interface UnitOfWork {
 }
 
 export interface Database {
-  /** Runs `fn` in a transaction, committing on return and rolling back on throw. */
+  /** Ejecuta `fn` en una transacción, con commit al retornar y rollback al lanzar. */
   transaction<T>(fn: (uow: UnitOfWork) => Promise<T>): Promise<T>
 
   /**
-   * Runs `fn` only if this process wins `name`, and returns null if it did not.
+   * Ejecuta `fn` solo si este proceso gana `name`, y devuelve null si no lo hizo.
    *
-   * Session-scoped rather than transaction-scoped, because the work it guards
-   * spans several transactions and a network call. Two replicas starting
-   * together must not both decide to do it.
+   * Con alcance de sesión y no de transacción, porque el trabajo que protege
+   * abarca varias transacciones y una llamada de red. Dos réplicas que arrancan
+   * a la vez no deben decidir ambas hacerlo.
    */
   withAdvisoryLock<T>(name: string, fn: () => Promise<T>): Promise<T | null>
 
@@ -52,7 +55,7 @@ export interface NewUser {
 export interface UserRepository {
   create(user: NewUser): Promise<User>
   findById(id: number): Promise<User | null>
-  /** Returns the ids that do not exist, so a caller can name all of them at once. */
+  /** Devuelve los id que no existen, para que un llamante pueda nombrarlos todos de una vez. */
   findMissingIds(ids: readonly number[]): Promise<number[]>
   listWithPendingTasks(): Promise<UserWithPendingTasks[]>
   listTasksFor(userId: number): Promise<TaskForUser[]>
@@ -63,7 +66,7 @@ export interface NewTask {
   description: string | null
 }
 
-/** The task as it was at the moment it became archived. */
+/** La tarea tal como estaba en el momento en que quedó archivada. */
 export interface ArchivedTask {
   id: number
   title: string
@@ -74,12 +77,12 @@ export interface TaskRepository {
   create(task: NewTask): Promise<Task>
 
   /**
-   * Reads the task and holds it until the transaction ends.
+   * Lee la tarea y la retiene hasta que termine la transacción.
    *
-   * Completions on one task are serialised through this lock. Without it two
-   * people finishing the last two parts at the same moment can each look at the
-   * other's uncommitted work, each conclude somebody is still pending, and the
-   * task is never archived at all.
+   * Las compleciones sobre una misma tarea se serializan a través de este lock.
+   * Sin él, dos personas que terminan las dos últimas partes en el mismo momento
+   * pueden mirar cada una el trabajo sin commit de la otra, concluir cada una que
+   * todavía queda alguien pendiente, y la tarea no archivarse nunca.
    */
   findByIdForUpdate(id: number): Promise<Task | null>
 
@@ -87,25 +90,26 @@ export interface TaskRepository {
   list(status?: TaskStatus): Promise<TaskWithAssignees[]>
   findWithAssignees(id: number): Promise<TaskWithAssignees | null>
 
-  /** Inserts the pairs that are not there yet. Existing ones are left alone. */
+  /** Inserta los pares que todavía no están. Los existentes se dejan como están. */
   assign(taskId: number, userIds: readonly number[]): Promise<void>
 
   findAssignment(taskId: number, userId: number): Promise<Assignment | null>
   markPartCompleted(taskId: number, userId: number): Promise<void>
 
   /**
-   * Archives the task if, and only if, it is still open and nobody assigned to
-   * it is outstanding. Returns the archived task to exactly one caller and null
-   * to every other — which is what makes the notification fire exactly once.
+   * Archiva la tarea si, y solo si, sigue abierta y nadie asignado a ella queda
+   * pendiente. Devuelve la tarea archivada a exactamente un llamante y null a
+   * todos los demás — que es lo que hace que la notificación se dispare
+   * exactamente una vez.
    */
   archiveIfEveryonePartFinished(taskId: number): Promise<ArchivedTask | null>
 
   /**
-   * Tasks that were archived and for which no delivery was ever attempted.
+   * Tareas que fueron archivadas y para las que nunca se intentó una entrega.
    *
-   * That combination can only mean the process died between committing the
-   * archive and starting the notification — the one window in which the
-   * obligation to notify existed nowhere but in memory.
+   * Esa combinación solo puede significar que el proceso murió entre el commit
+   * del archivado y el inicio de la notificación — la única ventana en la que la
+   * obligación de notificar no existía en ninguna parte salvo en memoria.
    */
   findArchivedWithoutNotification(): Promise<ArchivedTask[]>
 
@@ -116,23 +120,23 @@ export interface TaskRepository {
   listNotificationAttempts(taskId: number): Promise<NotificationAttempt[]>
 }
 
-/** A response already produced for an Idempotency-Key, ready to be replayed. */
+/** Una respuesta ya producida para una Idempotency-Key, lista para reproducirse. */
 export interface StoredResponse {
   status: number
   body: unknown
 }
 
 export interface IdempotencyClaim {
-  /** True when this caller is the one that gets to perform the operation. */
+  /** True cuando este llamante es el que puede realizar la operación. */
   owned: boolean
-  /** Set when `owned` is false and the original caller has already finished. */
+  /** Tiene valor cuando `owned` es false y el llamante original ya terminó. */
   replay?: StoredResponse
 }
 
 export interface IdempotencyStore {
   /**
-   * Claims (key, endpoint) for this caller, or blocks until whoever holds it is
-   * done and returns their answer.
+   * Reclama (key, endpoint) para este llamante, o bloquea hasta que quien lo
+   * tenga haya terminado y devuelve su respuesta.
    */
   claim(key: string, endpoint: string, requestHash: string): Promise<IdempotencyClaim>
   complete(key: string, endpoint: string, response: StoredResponse): Promise<void>
@@ -143,7 +147,7 @@ export interface NotificationOutcome {
   error: string | null
 }
 
-/** One POST to the configured destination. Retries are not its concern. */
+/** Un único POST al destino configurado. Los reintentos no son asunto suyo. */
 export interface Notifier {
   send(payload: ArchivedTaskNotification): Promise<NotificationOutcome>
 }

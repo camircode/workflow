@@ -4,12 +4,13 @@ import { DomainError, type ErrorCode } from '../../domain/errors.js'
 import type { ErrorBody } from './schemas.js'
 
 /**
- * The one place that decides what a failure looks like over HTTP.
+ * El único sitio que decide qué aspecto tiene un fallo sobre HTTP.
  *
- * The mapping lives here rather than at each throw site so the domain can say
- * what went wrong without also deciding what status code that is — and so every
- * error in this API has the same shape, which the specification requires and
- * consumers rely on far more than they say.
+ * El mapeo vive aquí y no en cada punto donde se lanza, para que el dominio
+ * pueda decir qué salió mal sin decidir además qué código de estado es eso — y
+ * para que todos los errores de esta API tengan la misma forma, que es lo que
+ * exige la especificación y en lo que los consumidores confían mucho más de lo
+ * que dicen.
  */
 const STATUS: Record<ErrorCode, number> = {
   VALIDATION_ERROR: 400,
@@ -17,9 +18,9 @@ const STATUS: Record<ErrorCode, number> = {
   USER_NOT_FOUND: 404,
   TASK_NOT_FOUND: 404,
 
-  // Not 404: the task and the user both exist. What does not exist is the
-  // relationship between them, and answering 404 would send the caller looking
-  // for a missing user they would never find.
+  // No es 404: la tarea y el usuario existen ambos. Lo que no existe es la
+  // relación entre ellos, y responder 404 mandaría al llamante a buscar un
+  // usuario ausente que nunca encontraría.
   USER_NOT_ASSIGNED: 409,
 
   TASK_ALREADY_ARCHIVED: 409,
@@ -41,29 +42,31 @@ export function registerErrorHandler(app: FastifyInstance): void {
       return reply.status(status).send(errorBody(error.code, error.message))
     }
 
-    // Zod rejected the body, the params or the query. Every problem at once,
-    // because sending them one at a time makes fixing four fields four requests.
+    // Zod rechazó el cuerpo, los parámetros o la query. Todos los problemas de
+    // una vez, porque enviarlos de uno en uno convierte arreglar cuatro campos en
+    // cuatro peticiones.
     if (hasZodFastifySchemaValidationErrors(error)) {
       const detail = error.validation
         .map((issue) => `${issue.instancePath || 'body'} ${issue.message ?? ''}`.trim())
         .join('; ')
       return reply
         .status(400)
-        .send(errorBody('VALIDATION_ERROR', detail || 'The request is not valid.'))
+        .send(errorBody('VALIDATION_ERROR', detail || 'La petición no es válida.'))
     }
 
-    // Malformed JSON and the like: Fastify rejected it before any schema ran.
+    // JSON malformado y similares: Fastify lo rechazó antes de que se ejecutara
+    // ningún esquema.
     const fastifyError = error as { statusCode?: number; message?: string }
     if (fastifyError.statusCode === 400) {
       return reply
         .status(400)
-        .send(errorBody('VALIDATION_ERROR', fastifyError.message ?? 'The request is not valid.'))
+        .send(errorBody('VALIDATION_ERROR', fastifyError.message ?? 'La petición no es válida.'))
     }
 
     request.log.error({ err: error }, 'unhandled error')
     return reply
       .status(500)
-      .send(errorBody('INTERNAL_ERROR', 'The request could not be completed.'))
+      .send(errorBody('INTERNAL_ERROR', 'No se pudo completar la petición.'))
   })
 
   app.setNotFoundHandler((request: FastifyRequest, reply: FastifyReply) =>
@@ -72,7 +75,7 @@ export function registerErrorHandler(app: FastifyInstance): void {
       .send(
         errorBody(
           'NOT_FOUND',
-          `No route matches ${request.method} ${request.url}. The API is described at /docs.`,
+          `Ninguna ruta coincide con ${request.method} ${request.url}. La API está descrita en /docs.`,
         ),
       ),
   )

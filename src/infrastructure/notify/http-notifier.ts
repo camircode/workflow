@@ -5,11 +5,12 @@ import type {
 } from '../../application/ports.js'
 
 /**
- * One POST to the configured destination, with a timeout.
+ * Un único POST al destino configurado, con un timeout.
  *
- * It never throws. A notification failing is an expected outcome that gets
- * written down, not an exception for somebody upstream to interpret — and the
- * caller needs the status code, or the absence of one, either way.
+ * Nunca lanza. Que una notificación falle es un resultado esperado del que se
+ * deja constancia, no una excepción para que alguien más arriba la interprete —
+ * y el llamante necesita el código de estado, o la ausencia de uno, en cualquier
+ * caso.
  */
 export class HttpNotifier implements Notifier {
   constructor(
@@ -30,11 +31,11 @@ export class HttpNotifier implements Notifier {
       })
       return {
         httpStatus: response.status,
-        error: response.ok ? null : `The destination answered ${response.status}.`,
+        error: response.ok ? null : `El destino respondió ${response.status}.`,
       }
     } catch (error) {
-      // No answer at all: a timeout, a refused connection, DNS. There is no
-      // status code to record, which is why the column is nullable.
+      // Ninguna respuesta en absoluto: un timeout, una conexión rechazada, DNS.
+      // No hay código de estado que registrar, y por eso la columna admite null.
       return { httpStatus: null, error: describe(error, abort.signal.aborted, this.timeoutMs) }
     } finally {
       clearTimeout(timer)
@@ -43,13 +44,14 @@ export class HttpNotifier implements Notifier {
 }
 
 /**
- * Node's fetch reports every transport failure as "fetch failed" and puts what
- * actually happened in `cause`. Recording only the wrapper would mean a column
- * full of identical strings that never says whether it was DNS, a refused
- * connection or a reset — which is the one question the record exists to answer.
+ * El fetch de Node reporta todo fallo de transporte como "fetch failed" y pone
+ * lo que realmente ocurrió en `cause`. Registrar solo el envoltorio significaría
+ * una columna llena de cadenas idénticas que nunca dice si fue DNS, una conexión
+ * rechazada o un reset — que es la única pregunta que el registro existe para
+ * responder.
  */
 function describe(error: unknown, timedOut: boolean, timeoutMs: number): string {
-  if (timedOut) return `No answer within ${timeoutMs}ms.`
+  if (timedOut) return `Sin respuesta en ${timeoutMs}ms.`
   if (!(error instanceof Error)) return String(error)
 
   const cause = (error as { cause?: unknown }).cause

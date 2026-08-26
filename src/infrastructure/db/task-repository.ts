@@ -8,7 +8,7 @@ import type {
 } from '../../domain/model.js'
 import type { ArchivedTask, NewTask, TaskRepository } from '../../application/ports.js'
 
-/** Rebuilt in three queries, so it lives in one place. */
+/** Se reconstruye en tres consultas, así que vive en un único sitio. */
 const ASSIGNEES_JSON = `
   COALESCE(
     json_agg(
@@ -48,9 +48,9 @@ export class PostgresTaskRepository implements TaskRepository {
   }
 
   async findByIdForUpdate(id: number): Promise<Task | null> {
-    // Everything that decides against this task's state queues here. It is the
-    // reason two people finishing the last two parts at the same instant produce
-    // one archive and one notification instead of none or two.
+    // Todo lo que decide contra el estado de esta tarea se encola aquí. Es la
+    // razón por la que dos personas terminando las dos últimas partes en el mismo
+    // instante producen un archivado y una notificación en vez de ninguno o dos.
     const { rows } = await this.client.query(
       `SELECT ${TASK_COLUMNS} FROM tasks t WHERE t.id = $1 FOR UPDATE`,
       [id],
@@ -59,8 +59,8 @@ export class PostgresTaskRepository implements TaskRepository {
   }
 
   async list(status?: TaskStatus): Promise<TaskWithAssignees[]> {
-    // One query with an aggregate rather than one query per task: the list is
-    // the endpoint most likely to be called with a lot of rows behind it.
+    // Una consulta con un agregado en lugar de una consulta por tarea: el listado
+    // es el endpoint con más probabilidades de llamarse con muchas filas detrás.
     const { rows } = await this.client.query(
       `SELECT ${TASK_COLUMNS}, ${ASSIGNEES_JSON}
          FROM tasks t
@@ -89,8 +89,8 @@ export class PostgresTaskRepository implements TaskRepository {
 
   async assign(taskId: number, userIds: readonly number[]): Promise<void> {
     if (userIds.length === 0) return
-    // The primary key on (task_id, user_id) is what makes a repeat harmless, so
-    // this can insert without asking what is already there.
+    // La clave primaria sobre (task_id, user_id) es lo que hace inofensiva una
+    // repetición, así que esto puede insertar sin preguntar qué hay ya.
     await this.client.query(
       `INSERT INTO task_assignments (task_id, user_id)
        SELECT $1, candidate FROM unnest($2::bigint[]) AS candidate
@@ -129,13 +129,13 @@ export class PostgresTaskRepository implements TaskRepository {
   }
 
   async archiveIfEveryonePartFinished(taskId: number): Promise<ArchivedTask | null> {
-    // The whole decision is this statement, and the database is the one making
-    // it. Whatever else is happening, exactly one caller can be handed this row,
-    // and holding it is the licence to notify.
+    // La decisión entera es esta sentencia, y quien la toma es la base de datos.
+    // Pase lo que pase alrededor, esta fila se le puede entregar a exactamente un
+    // llamante, y tenerla es la licencia para notificar.
     //
-    // The second EXISTS matters: a task nobody is assigned to has no outstanding
-    // parts, which is not the same as being finished. Without it, creating a task
-    // and touching it would archive something that never started.
+    // El segundo EXISTS importa: una tarea a la que no hay nadie asignado no tiene
+    // partes pendientes, lo cual no es lo mismo que estar terminada. Sin él, crear
+    // una tarea y tocarla archivaría algo que nunca empezó.
     const { rows } = await this.client.query(
       `UPDATE tasks
           SET status = 'archived', archived_at = now()
@@ -213,7 +213,7 @@ interface AttemptRow {
   error: string | null
 }
 
-/** As json_build_object leaves it: timestamps are ISO strings, not Dates. */
+/** Tal como lo deja json_build_object: los timestamps son cadenas ISO, no Date. */
 interface AssigneeJson {
   userId: number
   name: string

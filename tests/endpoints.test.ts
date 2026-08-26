@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { request, resetDatabase, startHarness, type Harness } from './harness.js'
 
-/** The behaviour each endpoint promises, including what it refuses. */
+/** El comportamiento que promete cada endpoint, incluido lo que rechaza. */
 describe('endpoints', () => {
   let h: Harness
 
@@ -23,7 +23,7 @@ describe('endpoints', () => {
     post('/tasks', description === undefined ? { title } : { title, description })
 
   describe('POST /users', () => {
-    it('registers a user and returns the id with the information', async () => {
+    it('registra un usuario y devuelve el id junto con la información', async () => {
       const res = await user('ada@example.com')
       expect(res.status).toBe(201)
       expect(res.body).toMatchObject({ id: 1, name: 'A', lastName: 'B', email: 'ada@example.com' })
@@ -31,19 +31,19 @@ describe('endpoints', () => {
     })
 
     it.each([
-      ['name missing', { lastName: 'B', email: 'a@example.com' }],
-      ['lastName missing', { name: 'A', email: 'a@example.com' }],
-      ['email missing', { name: 'A', lastName: 'B' }],
-      ['name blank', { name: '   ', lastName: 'B', email: 'a@example.com' }],
-      ['email malformed', { name: 'A', lastName: 'B', email: 'not-an-email' }],
-    ])('rejects a request with %s', async (_label, payload) => {
+      ['name ausente', { lastName: 'B', email: 'a@example.com' }],
+      ['lastName ausente', { name: 'A', email: 'a@example.com' }],
+      ['email ausente', { name: 'A', lastName: 'B' }],
+      ['name en blanco', { name: '   ', lastName: 'B', email: 'a@example.com' }],
+      ['email malformado', { name: 'A', lastName: 'B', email: 'not-an-email' }],
+    ])('rechaza una petición con %s', async (_label, payload) => {
       const res = await post('/users', payload)
       expect(res.status).toBe(400)
       expect(res.body.error.code).toBe('VALIDATION_ERROR')
       expect(typeof res.body.error.message).toBe('string')
     })
 
-    it('refuses an address already registered, whatever its case', async () => {
+    it('rechaza una dirección ya registrada, sea cual sea su capitalización', async () => {
       await user('ada@example.com')
       const res = await user('ADA@EXAMPLE.COM')
       expect(res.status).toBe(409)
@@ -52,21 +52,21 @@ describe('endpoints', () => {
   })
 
   describe('POST /tasks', () => {
-    it('creates a task that starts open, with the description optional', async () => {
+    it('crea una tarea que empieza abierta, con la descripción opcional', async () => {
       const res = await task('Ship it')
       expect(res.status).toBe(201)
       expect(res.body).toMatchObject({ id: 1, title: 'Ship it', description: null, status: 'open' })
     })
 
-    it('keeps the description when one is given', async () => {
+    it('conserva la descripción cuando se proporciona una', async () => {
       const res = await task('Ship it', 'by Friday')
       expect(res.body.description).toBe('by Friday')
     })
 
     it.each([
-      ['title missing', {}],
-      ['title blank', { title: '  ' }],
-    ])('rejects a request with %s', async (_label, payload) => {
+      ['title ausente', {}],
+      ['title en blanco', { title: '  ' }],
+    ])('rechaza una petición con %s', async (_label, payload) => {
       const res = await post('/tasks', payload)
       expect(res.status).toBe(400)
       expect(res.body.error.code).toBe('VALIDATION_ERROR')
@@ -74,7 +74,7 @@ describe('endpoints', () => {
   })
 
   describe('POST /tasks/:idTask/assign', () => {
-    it('assigns several users and reports success', async () => {
+    it('asigna varios usuarios e informa del éxito', async () => {
       await user('a@example.com')
       await user('b@example.com')
       const t = await task()
@@ -86,7 +86,7 @@ describe('endpoints', () => {
       expect(full.body.assignees).toHaveLength(2)
     })
 
-    it('does not duplicate a relationship that already exists', async () => {
+    it('no duplica una relación que ya existe', async () => {
       await user('a@example.com')
       const t = await task()
       await post(`/tasks/${t.body.id}/assign`, { userIds: [1] })
@@ -96,14 +96,14 @@ describe('endpoints', () => {
       expect(full.body.assignees).toHaveLength(1)
     })
 
-    it('refuses an unknown task', async () => {
+    it('rechaza una tarea desconocida', async () => {
       await user('a@example.com')
       const res = await post('/tasks/999/assign', { userIds: [1] })
       expect(res.status).toBe(404)
       expect(res.body.error.code).toBe('TASK_NOT_FOUND')
     })
 
-    it('refuses an unknown user, naming every missing id at once', async () => {
+    it('rechaza un usuario desconocido, nombrando todos los id ausentes de una vez', async () => {
       await user('a@example.com')
       const t = await task()
       const res = await post(`/tasks/${t.body.id}/assign`, { userIds: [1, 42, 43] })
@@ -113,7 +113,7 @@ describe('endpoints', () => {
       expect(res.body.error.message).toContain('43')
     })
 
-    it('refuses an empty list', async () => {
+    it('rechaza una lista vacía', async () => {
       const t = await task()
       const res = await post(`/tasks/${t.body.id}/assign`, { userIds: [] })
       expect(res.status).toBe(400)
@@ -129,7 +129,7 @@ describe('endpoints', () => {
       return t.body.id as number
     }
 
-    it("marks one user's part done without archiving the task", async () => {
+    it('marca la parte de un usuario como hecha sin archivar la tarea', async () => {
       const id = await assigned()
       const res = await post(`/tasks/${id}/complete`, { userId: 1 })
       expect(res.status).toBe(200)
@@ -140,7 +140,7 @@ describe('endpoints', () => {
       expect(full.body.assignees.find((a: { userId: number }) => a.userId === 2).completed).toBe(false)
     })
 
-    it('archives and notifies once the last part is done', async () => {
+    it('archiva y notifica en cuanto la última parte está hecha', async () => {
       const id = await assigned()
       await post(`/tasks/${id}/complete`, { userId: 1 })
       await post(`/tasks/${id}/complete`, { userId: 2 })
@@ -154,21 +154,21 @@ describe('endpoints', () => {
       expect(typeof h.notifier.received[0]!.archivedAt).toBe('string')
     })
 
-    it('refuses an unknown task', async () => {
+    it('rechaza una tarea desconocida', async () => {
       await user('a@example.com')
       const res = await post('/tasks/999/complete', { userId: 1 })
       expect(res.status).toBe(404)
       expect(res.body.error.code).toBe('TASK_NOT_FOUND')
     })
 
-    it('refuses an unknown user', async () => {
+    it('rechaza un usuario desconocido', async () => {
       const t = await task()
       const res = await post(`/tasks/${t.body.id}/complete`, { userId: 999 })
       expect(res.status).toBe(404)
       expect(res.body.error.code).toBe('USER_NOT_FOUND')
     })
 
-    it('refuses a user who is not assigned to the task', async () => {
+    it('rechaza a un usuario que no está asignado a la tarea', async () => {
       await user('a@example.com')
       const t = await task()
       const res = await post(`/tasks/${t.body.id}/complete`, { userId: 1 })
@@ -176,7 +176,7 @@ describe('endpoints', () => {
       expect(res.body.error.code).toBe('USER_NOT_ASSIGNED')
     })
 
-    it('is a no-op the second time the same user completes', async () => {
+    it('no hace nada la segunda vez que el mismo usuario completa', async () => {
       const id = await assigned()
       await post(`/tasks/${id}/complete`, { userId: 1 })
       const again = await post(`/tasks/${id}/complete`, { userId: 1 })
@@ -190,7 +190,7 @@ describe('endpoints', () => {
   })
 
   describe('GET /tasks', () => {
-    it('lists every task with who has completed their part', async () => {
+    it('lista todas las tareas indicando quién ha completado su parte', async () => {
       await user('a@example.com')
       const t = await task('With people')
       await post(`/tasks/${t.body.id}/assign`, { userIds: [1] })
@@ -201,7 +201,7 @@ describe('endpoints', () => {
       expect(res.body[0].assignees[0]).toMatchObject({ userId: 1, completed: false })
     })
 
-    it('filters by status', async () => {
+    it('filtra por estado', async () => {
       await user('a@example.com')
       const open = await task('Still open')
       const done = await task('Will archive')
@@ -216,7 +216,7 @@ describe('endpoints', () => {
       expect(stillOpen.body.map((t: { id: number }) => t.id)).toEqual([open.body.id])
     })
 
-    it('rejects a status that is not one of the two', async () => {
+    it('rechaza un estado que no es ninguno de los dos', async () => {
       const res = await get('/tasks?status=pending')
       expect(res.status).toBe(400)
       expect(res.body.error.code).toBe('VALIDATION_ERROR')
@@ -224,7 +224,7 @@ describe('endpoints', () => {
   })
 
   describe('GET /users', () => {
-    it('lists users with the tasks they still owe', async () => {
+    it('lista los usuarios con las tareas que todavía deben', async () => {
       await user('a@example.com')
       const t = await task('Owed')
       await post(`/tasks/${t.body.id}/assign`, { userIds: [1] })
@@ -234,7 +234,7 @@ describe('endpoints', () => {
       expect(res.body[0].pendingTasks).toEqual([{ id: t.body.id, title: 'Owed', status: 'open' }])
     })
 
-    it('stops listing a task as pending once the user has finished it', async () => {
+    it('deja de listar una tarea como pendiente en cuanto el usuario la ha terminado', async () => {
       await user('a@example.com')
       const t = await task('Owed')
       await post(`/tasks/${t.body.id}/assign`, { userIds: [1] })
@@ -247,7 +247,7 @@ describe('endpoints', () => {
   })
 
   describe('GET /users/:idUser/tasks', () => {
-    it("lists the user's tasks and whether their part is done", async () => {
+    it('lista las tareas del usuario y si su parte está hecha', async () => {
       await user('a@example.com')
       const one = await task('Done')
       const two = await task('Not done')
@@ -263,7 +263,7 @@ describe('endpoints', () => {
       expect(res.body.find((t: { id: number }) => t.id === two.body.id).completed).toBe(false)
     })
 
-    it('answers 404 for a user who does not exist, rather than an empty list', async () => {
+    it('responde 404 para un usuario que no existe, en lugar de una lista vacía', async () => {
       const res = await get('/users/999/tasks')
       expect(res.status).toBe(404)
       expect(res.body.error.code).toBe('USER_NOT_FOUND')
@@ -271,7 +271,7 @@ describe('endpoints', () => {
   })
 
   describe('GET /tasks/:idTask', () => {
-    it('returns the whole task with its assignees', async () => {
+    it('devuelve la tarea completa con sus personas asignadas', async () => {
       await user('a@example.com')
       const t = await task('Detailed', 'with a description')
       await post(`/tasks/${t.body.id}/assign`, { userIds: [1] })
@@ -286,7 +286,7 @@ describe('endpoints', () => {
       expect(res.body.assignees[0]).toMatchObject({ userId: 1, email: 'a@example.com', completed: false })
     })
 
-    it('answers 404 for a task that does not exist', async () => {
+    it('responde 404 para una tarea que no existe', async () => {
       const res = await get('/tasks/999')
       expect(res.status).toBe(404)
       expect(res.body.error.code).toBe('TASK_NOT_FOUND')
@@ -294,21 +294,21 @@ describe('endpoints', () => {
   })
 
   describe('GET /tasks/:idTask/notifications', () => {
-    it('is empty for a task that has not been archived', async () => {
+    it('está vacío para una tarea que no ha sido archivada', async () => {
       const t = await task()
       const res = await get(`/tasks/${t.body.id}/notifications`)
       expect(res.status).toBe(200)
       expect(res.body).toEqual([])
     })
 
-    it('answers 404 for a task that does not exist', async () => {
+    it('responde 404 para una tarea que no existe', async () => {
       const res = await get('/tasks/999/notifications')
       expect(res.status).toBe(404)
     })
   })
 
-  describe('the error shape', () => {
-    it('is the same for every failure', async () => {
+  describe('la forma del error', () => {
+    it('es la misma para todos los fallos', async () => {
       const responses = [
         await get('/tasks/999'),
         await get('/users/999/tasks'),
@@ -323,8 +323,8 @@ describe('endpoints', () => {
     })
   })
 
-  describe('the generated OpenAPI document', () => {
-    it('describes every endpoint from the same schemas that validate them', async () => {
+  describe('el documento OpenAPI generado', () => {
+    it('describe todos los endpoints a partir de los mismos esquemas que los validan', async () => {
       const res = await get('/openapi.json')
       expect(res.status).toBe(200)
       expect(res.body.openapi).toBe('3.1.0')
@@ -341,7 +341,7 @@ describe('endpoints', () => {
       }
     })
 
-    it('documents the Idempotency-Key header on every POST', async () => {
+    it('documenta la cabecera Idempotency-Key en todos los POST', async () => {
       const res = await get('/openapi.json')
       const posts = Object.values(res.body.paths as Record<string, Record<string, any>>)
         .flatMap((ops) => (ops['post'] ? [ops['post']] : []))

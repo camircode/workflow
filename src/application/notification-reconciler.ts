@@ -2,8 +2,8 @@ import type { Database } from './ports.js'
 import type { NotificationDispatcher } from './notification-dispatcher.js'
 
 /**
- * The name both replicas compete for. One wins and reconciles; the other is told
- * it lost and does nothing.
+ * El nombre por el que compiten ambas réplicas. Una gana y reconcilia; a la otra
+ * se le dice que perdió y no hace nada.
  */
 const LOCK = 'workflow:notification-reconciliation'
 
@@ -13,25 +13,25 @@ export interface ReconcilerLog {
 }
 
 /**
- * Sends the notifications that were owed when the process last died.
+ * Envía las notificaciones que se debían cuando el proceso murió la última vez.
  *
- * A task is archived and its notification is sent in that order, and they cannot
- * be one atomic act: the archive is a database transaction and the notification
- * is a call to somebody else's server, and holding the first open across the
- * second would tie a row lock to how slow a stranger is. So there is a window —
- * short, but real — in which the archive is committed and the obligation to
- * notify exists only in this process's memory. A pod killed there leaves a task
- * archived and nobody ever told.
+ * Una tarea se archiva y su notificación se envía en ese orden, y no pueden ser
+ * un único acto atómico: el archivado es una transacción de base de datos y la
+ * notificación es una llamada al servidor de otro, y mantener la primera abierta
+ * durante la segunda ataría un lock de fila a lo lento que sea un extraño. Así
+ * que hay una ventana — corta, pero real — en la que el archivado tiene commit y
+ * la obligación de notificar existe únicamente en la memoria de este proceso. Un
+ * pod eliminado ahí deja una tarea archivada y a nadie avisado nunca.
  *
- * A task that is archived with no attempt recorded against it is exactly that
- * case, and it is unambiguous: the first thing delivery does is record an
- * attempt, so zero attempts means delivery never started. A task whose three
- * attempts all failed is a different situation with a different answer, and is
- * deliberately left alone.
+ * Una tarea archivada sin ningún intento registrado contra ella es exactamente
+ * ese caso, y no es ambiguo: lo primero que hace la entrega es registrar un
+ * intento, así que cero intentos significa que la entrega nunca empezó. Una
+ * tarea cuyos tres intentos fallaron es una situación distinta con una respuesta
+ * distinta, y se deja en paz deliberadamente.
  *
- * Guarded by a lock because two replicas starting together would otherwise both
- * find the same tasks and both notify — breaking the exactly-once guarantee this
- * exists to protect.
+ * Protegida por un lock porque, de lo contrario, dos réplicas que arrancan a la
+ * vez encontrarían ambas las mismas tareas y notificarían ambas — rompiendo la
+ * garantía de exactamente una vez que esto existe para proteger.
  */
 export async function reconcileMissedNotifications(
   db: Database,
@@ -47,14 +47,14 @@ export async function reconcileMissedNotifications(
     let sent = 0
     for (const task of pending) {
       try {
-        // Awaited one at a time. This runs while the process is also serving
-        // requests, and a hundred simultaneous outbound calls at startup is a
-        // worse problem than the one being fixed.
+        // Se esperan de una en una. Esto se ejecuta mientras el proceso también
+        // está atendiendo peticiones, y cien llamadas salientes simultáneas en el
+        // arranque son un problema peor que el que se está arreglando.
         await dispatcher.deliver(task)
         sent++
       } catch (error) {
-        // One task failing must not stop the rest. The attempts are recorded
-        // either way, so nothing is lost by carrying on.
+        // Que una tarea falle no debe detener a las demás. Los intentos quedan
+        // registrados en cualquier caso, así que no se pierde nada por continuar.
         log.error({ taskId: task.id, err: error }, 'could not deliver a missed notification')
       }
     }

@@ -1,5 +1,5 @@
 /**
- * What this system is about, in types. No persistence, no HTTP, no framework.
+ * De qué trata este sistema, en tipos. Sin persistencia, sin HTTP, sin framework.
  */
 
 export type TaskStatus = 'open' | 'archived'
@@ -12,7 +12,7 @@ export interface User {
   createdAt: Date
 }
 
-/** A person's participation in one task. */
+/** La participación de una persona en una tarea. */
 export interface Assignment {
   userId: number
   name: string
@@ -35,7 +35,7 @@ export interface TaskWithAssignees extends Task {
   assignees: Assignment[]
 }
 
-/** One task as it looks from a particular person's side of it. */
+/** Una tarea vista desde el lado de una persona concreta. */
 export interface TaskForUser extends Task {
   completed: boolean
   completedAt: Date | null
@@ -48,14 +48,15 @@ export interface UserWithPendingTasks extends User {
 export interface NotificationAttempt {
   attemptNumber: number
   attemptedAt: Date
-  /** Null when the destination never answered: a timeout has no status code. */
+  /** Null cuando el destino nunca respondió: un timeout no tiene código de estado. */
   httpStatus: number | null
   error: string | null
 }
 
 /**
- * A task is archived exactly when every person assigned to it has finished
- * their part. A task with nobody assigned is not finished — it has not started.
+ * Una tarea se archiva exactamente cuando todas las personas asignadas a ella
+ * han terminado su parte. Una tarea sin nadie asignado no está terminada: no ha
+ * empezado.
  */
 export const everyoneHasFinished = (assignees: readonly Assignment[]): boolean =>
   assignees.length > 0 && assignees.every((a) => a.completed)

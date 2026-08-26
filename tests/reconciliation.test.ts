@@ -9,15 +9,16 @@ import { FakeNotifier, request, resetDatabase, startHarness, type Harness } from
 const silent = { info: () => undefined, error: () => undefined }
 
 /**
- * What happens to a notification the process never got to send.
+ * Qué ocurre con una notificación que el proceso nunca llegó a enviar.
  *
- * The state each test starts from — a task archived with no attempt recorded —
- * is exactly what a pod killed between the archiving commit and the first
- * delivery leaves behind. It is produced here by archiving through the API and
- * then removing the attempts, rather than by writing rows by hand, so the rest
- * of the task looks the way the application actually makes it look.
+ * El estado del que parte cada prueba — una tarea archivada sin ningún intento
+ * registrado — es exactamente lo que deja atrás un pod eliminado entre el commit
+ * del archivado y la primera entrega. Aquí se produce archivando a través de la
+ * API y eliminando después los intentos, en lugar de escribiendo filas a mano,
+ * para que el resto de la tarea tenga el aspecto que la aplicación realmente le
+ * da.
  */
-describe('reconciling notifications the process never sent', () => {
+describe('reconciliar notificaciones que el proceso nunca envió', () => {
   let h: Harness
 
   beforeAll(async () => {
@@ -38,7 +39,7 @@ describe('reconciling notifications the process never sent', () => {
     }
   }
 
-  /** Archives a task, then erases the evidence that anyone tried to notify. */
+  /** Archiva una tarea y luego borra la evidencia de que alguien intentó notificar. */
   const archivedButNeverNotified = async (title = 'Lost') => {
     await request(h.app, {
       method: 'POST',
@@ -63,7 +64,7 @@ describe('reconciling notifications the process never sent', () => {
     return task.body.id as number
   }
 
-  it('delivers a notification for a task archived with no attempt recorded', async () => {
+  it('entrega una notificación para una tarea archivada sin ningún intento registrado', async () => {
     const taskId = await archivedButNeverNotified('Lost in the window')
 
     const delivered = await reconcileMissedNotifications(h.db, h.dispatcher, silent)
@@ -77,9 +78,10 @@ describe('reconciling notifications the process never sent', () => {
     expect(attempts.body[0].httpStatus).toBe(200)
   })
 
-  it('leaves alone a task whose attempts were made and failed', async () => {
-    // Three failures is a delivered verdict, not a lost obligation. Retrying it
-    // at every restart would turn a dead endpoint into an infinite retry loop.
+  it('deja en paz una tarea cuyos intentos se hicieron y fallaron', async () => {
+    // Tres fallos son un veredicto emitido, no una obligación perdida.
+    // Reintentarlo en cada reinicio convertiría un endpoint muerto en un bucle de
+    // reintentos infinito.
     const notifier = new FakeNotifier().always({ httpStatus: 503, error: 'unavailable' })
     const harness = await startHarness(notifier)
     try {
@@ -116,14 +118,14 @@ describe('reconciling notifications the process never sent', () => {
     }
   })
 
-  it('does nothing when there is nothing to do', async () => {
+  it('no hace nada cuando no hay nada que hacer', async () => {
     expect(await reconcileMissedNotifications(h.db, h.dispatcher, silent)).toBe(0)
     expect(h.notifier.received).toHaveLength(0)
   })
 
-  it('notifies once when two replicas reconcile at the same moment', async () => {
-    // The reason the lock exists. Both pods boot, both see the same archived
-    // task, and without the lock both would announce it.
+  it('notifica una sola vez cuando dos réplicas reconcilian en el mismo momento', async () => {
+    // La razón por la que existe el lock. Ambos pods arrancan, ambos ven la misma
+    // tarea archivada, y sin el lock ambos la anunciarían.
     const taskId = await archivedButNeverNotified('Two replicas')
 
     const replica = () => {
@@ -141,7 +143,7 @@ describe('reconciling notifications the process never sent', () => {
         reconcileMissedNotifications(b.db, b.dispatcher, silent),
       ])
 
-      // One did the work; the other found the lock taken and stood down.
+      // Una hizo el trabajo; la otra encontró el lock tomado y se retiró.
       expect(sentByA + sentByB).toBe(1)
       expect(a.notifier.received.length + b.notifier.received.length).toBe(1)
 

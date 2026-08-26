@@ -31,15 +31,17 @@ export async function assignUsers(
   taskId: number,
   userIds: readonly number[],
 ): Promise<void> {
-  // Locked for the same reason a completion locks it: this decides against the
-  // task's current state, and that state must not change underneath the decision.
+  // Se bloquea por el mismo motivo por el que la bloquea una compleción: esto
+  // decide contra el estado actual de la tarea, y ese estado no debe cambiar por
+  // debajo de la decisión.
   const task = await uow.tasks.findByIdForUpdate(taskId)
   if (!task) throw taskNotFound(taskId)
   if (task.status === 'archived') throw taskAlreadyArchived(taskId)
 
-  // The same id twice in one request is one assignment. The primary key would
-  // refuse the duplicate anyway; saying so here means the intent is readable
-  // rather than delegated to a constraint violation nobody sees.
+  // El mismo id dos veces en una misma petición es una sola asignación. La clave
+  // primaria rechazaría el duplicado de todas formas; decirlo aquí hace que la
+  // intención sea legible en lugar de quedar delegada a una violación de
+  // restricción que nadie ve.
   const unique = [...new Set(userIds)]
 
   const missing = await uow.users.findMissingIds(unique)
@@ -49,19 +51,20 @@ export async function assignUsers(
 }
 
 export interface CompletionResult {
-  /** Set only for the one caller whose completion archived the task. */
+  /** Solo tiene valor para el único llamante cuya compleción archivó la tarea. */
   archived: ArchivedTask | null
 }
 
 /**
- * Marks one person's part of a task as finished, and archives the task if that
- * was the last part outstanding.
+ * Marca como terminada la parte de una persona en una tarea, y archiva la tarea
+ * si esa era la última parte pendiente.
  *
- * The lock taken on the task is what makes "archived exactly once" true. Two
- * people finishing the last two parts at the same instant would otherwise each
- * read the other's uncommitted work as still outstanding, and nobody would
- * archive anything. Serialised, the second one sees the first's completion and
- * archives; the conditional update then guarantees only one of them ever can.
+ * El lock tomado sobre la tarea es lo que hace cierto el "archivada exactamente
+ * una vez". Dos personas terminando las dos últimas partes en el mismo instante
+ * leerían, de otro modo, el trabajo sin commit de la otra como todavía
+ * pendiente, y nadie archivaría nada. Serializadas, la segunda ve la compleción
+ * de la primera y archiva; el UPDATE condicional garantiza entonces que solo una
+ * de ellas puede llegar a hacerlo.
  */
 export async function completePart(
   uow: UnitOfWork,
@@ -77,8 +80,9 @@ export async function completePart(
   const assignment = await uow.tasks.findAssignment(taskId, userId)
   if (!assignment) throw userNotAssigned(userId, taskId)
 
-  // Already done — by an earlier request, or by the one this is a duplicate of.
-  // Saying so again is not an error, and it must not archive or notify twice.
+  // Ya está hecho — por una petición anterior, o por aquella de la que esta es
+  // un duplicado. Volver a decirlo no es un error, y no debe archivar ni
+  // notificar dos veces.
   if (assignment.completed) return { archived: null }
 
   await uow.tasks.markPartCompleted(taskId, userId)

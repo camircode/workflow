@@ -6,12 +6,13 @@ export const IDEMPOTENCY_HEADER = 'idempotency-key'
 export interface Executed<T> {
   body: T
   /**
-   * Runs once, after the transaction commits, and only for the caller that
-   * actually performed the operation. A replay never triggers it.
+   * Se ejecuta una vez, después de que la transacción haga commit, y solo para el
+   * llamante que realmente realizó la operación. Una reproducción nunca lo
+   * dispara.
    *
-   * This is where the notification goes. Sending it inside the transaction would
-   * tie a row lock to how long somebody else's server takes to answer; sending it
-   * before the commit would mean announcing something that might still roll back.
+   * Aquí es donde va la notificación. Enviarla dentro de la transacción ataría un
+   * lock de fila a lo que tarde en responder el servidor de otro; enviarla antes
+   * del commit significaría anunciar algo que todavía podría revertirse.
    */
   afterCommit?: () => void
 }
@@ -22,12 +23,13 @@ export interface HttpResult<T, S extends number> {
 }
 
 /**
- * Canonical JSON, so that two requests differing only in key order hash the same.
+ * JSON canónico, para que dos peticiones que solo difieren en el orden de las
+ * claves den el mismo hash.
  *
- * The body hashed here is the one Zod has already parsed, so it is also
- * normalised — a title sent with surrounding spaces and the same title without
- * them are one request, which is what a caller retrying after a double click
- * means by "the same request".
+ * El cuerpo que se hashea aquí es el que Zod ya ha parseado, así que además está
+ * normalizado — un título enviado con espacios alrededor y el mismo título sin
+ * ellos son una única petición, que es lo que quiere decir un llamante que
+ * reintenta tras un doble clic con "la misma petición".
  */
 function canonicalise(value: unknown): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null'
@@ -43,11 +45,12 @@ const hashOf = (body: unknown): string =>
   createHash('sha256').update(canonicalise(body)).digest('hex')
 
 /**
- * Runs a write once per Idempotency-Key, even when the same key arrives twice at
- * the same moment.
+ * Ejecuta una escritura una sola vez por Idempotency-Key, incluso cuando la
+ * misma clave llega dos veces en el mismo momento.
  *
- * Without a key the operation simply runs — the header is offered, not demanded,
- * because requiring it would break every caller that has no retry problem.
+ * Sin clave la operación simplemente se ejecuta — la cabecera se ofrece, no se
+ * exige, porque exigirla rompería a todos los llamantes que no tienen ningún
+ * problema de reintentos.
  */
 export async function runIdempotent<T, S extends number>(
   db: Database,
@@ -70,17 +73,18 @@ export async function runIdempotent<T, S extends number>(
     if (!claim.owned) return { replay: claim.replay } as const
 
     const executed = await operation(uow)
-    // Stored inside the same transaction as the work itself: if the work rolls
-    // back there is no answer to replay, and the key is free again.
+    // Se guarda dentro de la misma transacción que el trabajo en sí: si el
+    // trabajo se revierte no hay respuesta que reproducir, y la clave vuelve a
+    // estar libre.
     await uow.idempotency.complete(key, endpoint, { status, body: executed.body })
     return { executed } as const
   })
 
   if ('replay' in outcome && outcome.replay) {
-    // The stored response is the one this same handler wrote, with this same
-    // status, and JSONB round-trips it unchanged. The cast asserts exactly that
-    // and nothing wider — it is the only place the type system cannot follow the
-    // value through the database and back.
+    // La respuesta almacenada es la que escribió este mismo manejador, con este
+    // mismo estado, y JSONB la devuelve intacta. El cast afirma exactamente eso y
+    // nada más amplio — es el único sitio donde el sistema de tipos no puede
+    // seguir el valor a través de la base de datos y de vuelta.
     return {
       status: outcome.replay.status as S,
       body: outcome.replay.body as T,
@@ -90,6 +94,6 @@ export async function runIdempotent<T, S extends number>(
     outcome.executed.afterCommit?.()
     return { status, body: outcome.executed.body }
   }
-  // claim() only returns owned:false with a replay, or throws.
-  throw new Error('Idempotent operation produced neither a result nor a replay.')
+  // claim() solo devuelve owned:false con una reproducción, o lanza.
+  throw new Error('La operación idempotente no produjo ni un resultado ni una reproducción.')
 }

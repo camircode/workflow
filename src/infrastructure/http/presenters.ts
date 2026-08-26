@@ -8,10 +8,10 @@ import type {
 } from '../../domain/model.js'
 
 /**
- * Domain objects carry Date; JSON does not. Converting here, once, keeps every
- * repository free of the question and every response consistent — rather than
- * some endpoints emitting an ISO string and others whatever JSON.stringify
- * happened to do with a Date that day.
+ * Los objetos del dominio llevan Date; JSON no. Convertir aquí, una sola vez,
+ * mantiene a todos los repositorios al margen de la cuestión y a todas las
+ * respuestas consistentes — en lugar de que unos endpoints emitan una cadena ISO
+ * y otros lo que JSON.stringify hiciera ese día con un Date.
  */
 
 export const presentUser = (user: User) => ({

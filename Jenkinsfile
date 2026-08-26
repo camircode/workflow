@@ -42,6 +42,14 @@ pipeline {
                 //   -u and HOME=/tmp, so node_modules is not left behind owned by
                 //   root for cleanWs() to fail on, and corepack has somewhere to
                 //   write.
+                //
+                //   /etc/passwd and /etc/group read-only, because a uid mapped in
+                //   with -u does not exist inside the image. Testcontainers calls
+                //   os.userInfo(), which is uv_os_get_passwd, and that fails with
+                //   a bare ENOENT naming no path. Mounting the host's files makes
+                //   the agent's own account resolvable. This does not reproduce on
+                //   a workstation whose uid happens to be 1000 — node:24 already
+                //   has a user there.
                 sh '''
                     set -eu
                     DOCKER_GID="$(getent group docker | cut -d: -f3)"
@@ -51,6 +59,8 @@ pipeline {
                       -v /var/run/docker.sock:/var/run/docker.sock \
                       --group-add "$DOCKER_GID" \
                       -u "$(id -u):$(id -g)" \
+                      -v /etc/passwd:/etc/passwd:ro \
+                      -v /etc/group:/etc/group:ro \
                       -e HOME=/tmp -e CI=true \
                       -v "$PWD":/src -w /src \
                       node:24 \

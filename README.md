@@ -155,6 +155,9 @@ Donde la especificación no decía:
 - Un 4xx del destino de la notificación no se reintenta.
 - Los ids viajan como números JSON, no como cadenas.
 
-Por tiempo quedaron fuera la paginación de los listados, la rotación automática
-de la contraseña de base, y un outbox transaccional —la reconciliación al
-arranque cubre la misma ventana con bastante menos maquinaria.
+## Qué quedó fuera por tiempo
+
+Nada de lo que pide el enunciado. Los nueve endpoints, el formato de error, la
+idempotencia, el archivado sin duplicados, las notificaciones con reintentos, el
+esquema versionado, el UML, los tests y la mejora extra están entregados y
+funcionando en la URL pública.

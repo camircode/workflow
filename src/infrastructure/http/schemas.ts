@@ -17,21 +17,30 @@ const trimmed = (field: string) =>
 
 // --- requests ---------------------------------------------------------------
 
+// Cada campo lleva un ejemplo explícito. Sin él, Swagger UI genera uno a partir
+// del esquema, y para `email` eso significa fabricar una cadena que cumpla el
+// patrón que Zod emite junto al formato: el resultado es un bloque ilegible de
+// varias líneas en mitad del cuerpo de ejemplo.
 export const CreateUserBody = z
   .object({
-    name: trimmed('name'),
-    lastName: trimmed('lastName'),
-    email: z.email('email debe ser una dirección válida'),
+    name: trimmed('name').meta({ example: 'Ada' }),
+    lastName: trimmed('lastName').meta({ example: 'Lovelace' }),
+    email: z.email('email debe ser una dirección válida').meta({ example: 'ada@example.com' }),
   })
   .meta({ id: 'CreateUserBody' })
 
 export const CreateTaskBody = z
   .object({
-    title: trimmed('title'),
+    title: trimmed('title').meta({ example: 'Preparar la demo' }),
     // Opcional según la especificación. Ausente y null significan ambos "sin
     // descripción", y ambos se guardan como null en lugar de preservar una
     // distinción que la API tendría después que explicar.
-    description: z.string().trim().nullish().transform((value) => value ?? null),
+    description: z
+      .string()
+      .trim()
+      .nullish()
+      .transform((value) => value ?? null)
+      .meta({ example: 'Repasar el guion antes del viernes' }),
   })
   .meta({ id: 'CreateTaskBody' })
 
@@ -39,12 +48,13 @@ export const AssignBody = z
   .object({
     userIds: z
       .array(z.number().int().positive())
-      .min(1, 'userIds debe contener al menos un usuario'),
+      .min(1, 'userIds debe contener al menos un usuario')
+      .meta({ example: [1, 2] }),
   })
   .meta({ id: 'AssignBody' })
 
 export const CompleteBody = z
-  .object({ userId: z.number().int().positive() })
+  .object({ userId: z.number().int().positive().meta({ example: 1 }) })
   .meta({ id: 'CompleteBody' })
 
 export const TaskIdParams = z.object({ idTask: z.coerce.number().int().positive() })
@@ -153,6 +163,7 @@ export const IdempotencyHeaders = z.looseObject({
     .min(1)
     .optional()
     .meta({
+      example: '3f1a9c7e-2b44-4d51-9a2f-0c8e5d7b1a63',
       description:
         'Envía la misma clave con el mismo cuerpo dos veces y la operación ocurre ' +
         'una sola vez; ambas respuestas son idénticas. Se cumple incluso cuando las ' +

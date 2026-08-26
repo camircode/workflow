@@ -7,12 +7,12 @@ import {
   getTask,
   listNotificationAttempts,
   listTasks,
-} from '../../../application/task-service.js'
-import type { NotificationDispatcher } from '../../../application/notification-dispatcher.js'
-import type { Database } from '../../../application/ports.js'
-import { presentNotificationAttempt, presentTask } from '../presenters.js'
-import { runIdempotent } from '../idempotency.js'
-import { idempotencyKeyOf } from '../request.js'
+} from '#application/task-service.js'
+import type { NotificationDispatcher } from '#application/notification-dispatcher.js'
+import type { Database } from '#application/ports.js'
+import { presentNotificationAttempt, presentTask } from '#infrastructure/http/presenters.js'
+import { runIdempotent } from '#infrastructure/http/idempotency.js'
+import { idempotencyKeyOf } from '#infrastructure/http/request.js'
 import {
   AssignBody,
   CompleteBody,
@@ -26,7 +26,7 @@ import {
   TaskIdParams,
   ValidationError,
   TaskResponse,
-} from '../schemas.js'
+} from '#infrastructure/http/schemas.js'
 
 /** Una tarea recién creada todavía no tiene personas asignadas. */
 const CreatedTaskResponse = TaskResponse

@@ -117,9 +117,10 @@ puede consultar la base de otra aplicación.
 El repositorio GitOps no contiene secretos. Los inyecta Ansible contra el control
 plane. `NOTIFY_URL` va en un ConfigMap, porque no es un secreto.
 
-Queda un límite conocido: el Secret renderizado permanece en el control plane
-como un archivo de root en modo 0600. External Secrets Operator sincronizando
-desde Bitwarden eliminaría ese archivo, y es el paso siguiente.
+Los manifiestos que llevan un secreto se aplican por stdin y no se escriben en
+disco en ningún momento. Antes se renderizaban a `/etc/kubernetes` en modo 0600
+y se quedaban ahí: root-only no es lo mismo que ausente, porque cualquier copia
+de seguridad del sistema de archivos o snapshot del guest se los lleva en claro.
 
 ## El destino de las notificaciones
 

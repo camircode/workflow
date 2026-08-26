@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Only the build emits, and only from src. The base config covers the tests
+    // and the vitest config too, which cannot live under rootDir.
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src"],
+  "exclude": ["**/*.test.ts"]
+}

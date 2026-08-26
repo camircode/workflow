@@ -1,0 +1,20 @@
+# pnpm 11 reads its settings from here rather than from package.json.
+#
+# An install script runs arbitrary code with the developer's privileges, so pnpm
+# will not run one unless it is named here — and it treats an undecided
+# dependency as an error rather than a warning. Every package with a script is
+# therefore either allowed or declined by name, deliberately.
+#
+#   esbuild      tsx and vitest both load its platform binary, which this
+#                postinstall links. Without it neither runs.
+#   cpu-features Native speedup for ssh2, which works without it.
+#   ssh2         Optional native crypto bindings; the pure-JS path is fine.
+#   protobufjs   Only sets up a CLI this project never calls.
+#
+# cpu-features, ssh2 and protobufjs arrive as transitive dependencies of
+# Testcontainers, which is used only in tests.
+allowBuilds:
+  esbuild: true
+  cpu-features: false
+  protobufjs: false
+  ssh2: false

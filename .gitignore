@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+*.local
+coverage/
+
+# Local tooling metadata, not part of this project.
+.atl/

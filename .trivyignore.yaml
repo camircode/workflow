@@ -1,0 +1,16 @@
+# Exceptions to "the build fails on a fixable HIGH or CRITICAL".
+#
+# Every entry needs a reachability argument and an expiry date. The date is the
+# point: an exception that never expires is a suppression, and a suppression is
+# how a scanner stops being read. When this lapses the build fails again and
+# somebody has to look.
+vulnerabilities:
+  - id: CVE-2026-14456
+    statement: >-
+      Unbounded memory growth in OpenSSL's QUIC *server*. This image runs a
+      Fastify HTTP/1.1 server with no QUIC listener, and TLS is terminated
+      upstream by the cluster Gateway, so the affected code path is never
+      entered. The fix (libssl3t64 3.5.7) is not yet in the distroless
+      nodejs24-debian13 base; this lapses so the build fails again if it still
+      has not arrived.
+    expired_at: 2026-09-30

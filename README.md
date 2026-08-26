@@ -11,7 +11,7 @@ Requiere Node 24, pnpm y Docker.
 
 ```bash
 pnpm install
-docker run -d --name wf -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=workflow -p 5432:5432 postgres:17-alpine
+docker run -d --name wf -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=workflow -p 127.0.0.1:5432:5432 postgres:17-alpine
 cp .env.example .env          # completar DATABASE_URL y NOTIFY_URL
 pnpm db:migrate
 pnpm dev
@@ -22,16 +22,38 @@ no arranca. Puede apuntar a cualquier receptor HTTP; el sistema externo no
 necesita existir, porque los intentos quedan registrados en
 `GET /tasks/:idTask/notifications` de todos modos.
 
+## Cómo probar la desplegada
+
+Sin credenciales ni cabeceras especiales:
+
+```bash
+curl https://workflow.camir.tech/health
+curl -XPOST https://workflow.camir.tech/users \
+  -H 'content-type: application/json' \
+  -d '{"name":"Ada","lastName":"Lovelace","email":"ada@example.com"}'
+```
+
+`https://workflow.camir.tech/docs` abre Swagger UI, desde donde se pueden
+ejecutar todos los endpoints sin salir del navegador.
+
 ## Tests
 
 ```bash
 pnpm test
 ```
 
-53 tests contra un PostgreSQL real, levantado con Testcontainers. Necesita
-Docker corriendo. Las garantías de concurrencia las hace cumplir la base de
-datos —locks de fila, locks consultivos, un `UPDATE` condicional— así que las
-pruebas necesitan una base real para comprobarlas.
+53 tests contra un PostgreSQL real levantado con Testcontainers, así que necesita
+Docker corriendo. Las garantías de concurrencia las hace cumplir la base, y
+comprobarlas requiere una base de verdad.
+
+## El modelo de datos
+
+![Esquema de base de datos](docs/diagrams/schema.svg)
+
+El SQL está en [db/migrations/001_initial.sql](db/migrations/001_initial.sql).
+La clave primaria compuesta de `task_assignments` es lo que hace imposible
+asignar dos veces a la misma persona, y su columna `completed_at` es la que
+decide cuándo se archiva la tarea.
 
 ## Decisiones técnicas
 
@@ -136,10 +158,6 @@ ve nadie.
 El detalle completo está en [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md).
 
 ## Supuestos
-
-El esquema completo, con tipos y claves, está en
-[docs/diagrams/schema.svg](docs/diagrams/schema.svg) y en
-[db/migrations/001_initial.sql](db/migrations/001_initial.sql).
 
 Donde la especificación no decía:
 

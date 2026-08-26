@@ -15,8 +15,7 @@ descritas más abajo.
 
 ## La máquina y sus guests
 
-Un host Proxmox, `pve01`, con trece guests sobre un bridge interno `vmbr10` en
-`10.10.10.0/24`.
+Un host Proxmox con trece guests sobre un bridge interno privado.
 
 Los servicios de confianza corren en contenedores LXC: `data-01` con PostgreSQL,
 `edge-01`, el controlador de Jenkins. Lo que ejecuta código de terceros corre en
@@ -27,13 +26,12 @@ El presupuesto asignado es de 49.5 GB sobre 62 GiB. La CPU está sobrecomprometi
 33 vCPU sobre 16 hilos porque los picos de los guests no coinciden. La memoria no
 lo está: cuando falta memoria, el kernel elige un proceso y lo mata.
 
-Los IDs de VM siguen a las direcciones, con la regla `100 + último octeto`. Así
-`pct exec 142` opera sobre el guest que responde en `10.10.10.42`.
+El ID de cada VM se deriva del último octeto de su dirección, así que el número
+identifica a la máquina sin consultar ningún mapeo.
 
 ## Cómo entra una petición
 
-El firewall del host hace DNAT de los puertos 80 y 443 al Gateway del cluster en
-`10.10.10.200`. No hay proxy TCP intermedio: uno delante de un Gateway que
+El firewall del host hace DNAT de los puertos 80 y 443 al Gateway del cluster. No hay proxy TCP intermedio: uno delante de un Gateway que
 termina TLS pierde la dirección del cliente, y el Gateway API de Cilium no expone
 PROXY protocol para recuperarla.
 
@@ -53,8 +51,8 @@ no registra nada porque nada le llegó.
 Hay una tercera frontera entre la red de pods y la red del homelab. Cilium corre
 con `ipv4NativeRoutingCIDR` fijado al rango de pods y masquerading activado, así
 que todo lo que un pod envía fuera de ese rango sale con la dirección del nodo.
-`data-01` ve `10.10.10.32`. Las reglas de `pg_hba.conf` y del firewall permitían
-el rango de pods y nunca podían coincidir; como nftables descarta en vez de
+La base ve la dirección del nodo. Las reglas de `pg_hba.conf` y del firewall
+permitían el rango de pods y nunca podían coincidir; como nftables descarta en vez de
 rechazar, el síntoma era un timeout sin registro en ninguno de los dos lados. Las
 reglas nombran ahora a los nodos, tomados del inventario de Ansible.
 

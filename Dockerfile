@@ -40,6 +40,15 @@ FROM gcr.io/distroless/nodejs24-debian13:nonroot
 
 WORKDIR /app
 
+# El package.json viaja con la imagen, y no es opcional: el código importa por
+# subruta (`#domain/...`, `#application/...`) y ese mapa vive aquí. Node resuelve
+# esos especificadores buscando el package.json más cercano al archivo que
+# importa, así que sin él falla al arrancar con ERR_PACKAGE_IMPORT_NOT_DEFINED.
+#
+# También fija `"type": "module"` de forma explícita. Sin el archivo funcionaba
+# igual porque Node 24 detecta la sintaxis ESM solo, pero depender de una
+# detección para algo que se puede declarar es innecesario.
+COPY package.json ./
 COPY --from=runtime-deps /src/node_modules ./node_modules
 COPY --from=build /src/dist ./dist
 

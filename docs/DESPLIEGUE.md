@@ -15,7 +15,7 @@ descritas más abajo.
 
 ## La máquina y sus guests
 
-Un host Proxmox con trece guests sobre un bridge interno privado.
+Un host Proxmox con once guests sobre un bridge interno privado.
 
 Los servicios de confianza corren en contenedores LXC: `data-01` con PostgreSQL,
 `edge-01`. Lo que ejecuta código de terceros corre en máquinas virtuales con su
@@ -23,8 +23,8 @@ propio kernel: los nodos de Kubernetes. La integración continua ya no corre en 
 homelab: los workflows de GitHub Actions corren en máquinas virtuales efímeras de
 GitHub, que es donde se ejecuta lo que traiga un pull request.
 
-El presupuesto asignado es de 49.5 GB sobre 62 GiB. La CPU está sobrecomprometida
-33 vCPU sobre 16 hilos porque los picos de los guests no coinciden. La memoria no
+El presupuesto asignado es de 28 GB sobre 62 GiB. La CPU está sobrecomprometida
+27 vCPU sobre 16 hilos porque los picos de los guests no coinciden. La memoria no
 lo está: cuando falta memoria, el kernel elige un proceso y lo mata.
 
 El ID de cada VM se deriva del último octeto de su dirección, así que el número

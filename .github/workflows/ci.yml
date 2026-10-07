@@ -1,0 +1,240 @@
+# Builds the image, tests and scans it, pushes it to GHCR by digest, and commits
+# that digest to camircode/gitops. Argo CD does the deploying; this workflow never
+# touches the cluster, so the git log of camircode/gitops stays the real
+# deployment history.
+#
+# This replaces the Jenkinsfile that did the same job on the homelab's Jenkins,
+# stage for stage. The shell in each step was moved over unchanged.
+#
+# Pull requests run only the first step. They get no secrets (GitHub withholds
+# them from forks), so nothing that publishes or deploys can run from one, and
+# `pull_request_target` is deliberately not used. Only a push to main updates
+# gitops; a push to ci/** goes as far as the scan, which is how a change to this
+# file gets tried without deploying anything.
+name: ci
+
+on:
+  push:
+    branches: [main, 'ci/**']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# disableConcurrentBuilds in the Jenkinsfile: queue, never cancel a build that
+# may be halfway through publishing.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: 'ghcr.io'
+  IMAGE: 'ghcr.io/camircode/workflow'
+  GITOPS: 'git@github.com:camircode/gitops.git'
+  MANIFEST: 'manifests/workflow/deployment.yaml'
+
+jobs:
+  ci:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Test
+        run: |
+          set -eu
+          DOCKER_GID="$(getent group docker | cut -d: -f3)"
+
+          docker run --rm \
+            --network host \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            --group-add "$DOCKER_GID" \
+            -u "$(id -u):$(id -g)" \
+            -v /etc/passwd:/etc/passwd:ro \
+            -v /etc/group:/etc/group:ro \
+            -e HOME=/tmp -e CI=true \
+            -v "$PWD":/src -w /src \
+            node:24 \
+            sh -c '
+              set -eu
+              # The directory has to exist first: corepack resolves it
+              # with realpathSync and fails with a bare ENOENT if it
+              # does not.
+              mkdir -p /tmp/bin
+              corepack enable --install-directory /tmp/bin
+              export PATH=/tmp/bin:$PATH
+              pnpm install --frozen-lockfile
+              pnpm typecheck
+              pnpm test
+            '
+
+
+      - name: Compute build metadata
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "SHORT_SHA=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+
+      - name: Build and push
+        if: github.event_name != 'pull_request'
+        env:
+          GHCR_USER: ${{ secrets.GHCR_USERNAME }}
+          GHCR_PASS: ${{ secrets.GHCR_TOKEN }}
+        run: |
+          set -eu
+          echo "$GHCR_PASS" | docker login "$REGISTRY" -u "$GHCR_USER" --password-stdin
+
+          docker buildx create --use --name builder 2>/dev/null || docker buildx use builder
+
+          # The tag exists so a human can find the build; the digest
+          # is what gets deployed. --metadata-file is how the digest
+          # comes back without a second registry round trip.
+          docker buildx build \
+            --push \
+            --provenance=false \
+            --tag "$IMAGE:$SHORT_SHA" \
+            --metadata-file metadata.json \
+            .
+
+
+      - name: Record the image digest
+        if: github.event_name != 'pull_request'
+        run: |
+          digest="$(jq -r '."containerimage.digest"' metadata.json)"
+          echo "IMAGE_DIGEST=$digest" >> "$GITHUB_ENV"
+          echo "Pushed ${IMAGE}@${digest}"
+
+      - name: Smoke test
+        if: github.event_name != 'pull_request'
+        run: |
+          set -eu
+          NET="smoke-$GITHUB_RUN_NUMBER"
+          DB="smoke-db-$GITHUB_RUN_NUMBER"
+          APP="smoke-app-$GITHUB_RUN_NUMBER"
+
+          cleanup() {
+            docker logs "$APP" 2>&1 | tail -30 || true
+            docker rm -f "$APP" "$DB" >/dev/null 2>&1 || true
+            docker network rm "$NET" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          docker network create "$NET"
+          docker run -d --name "$DB" --network "$NET" \
+            -e POSTGRES_PASSWORD=smoke -e POSTGRES_DB=workflow \
+            postgres:17-alpine
+
+          for i in $(seq 1 60); do
+            docker exec "$DB" pg_isready -U postgres -d workflow >/dev/null 2>&1 && break
+            sleep 1
+          done
+
+          docker pull "${IMAGE}@${IMAGE_DIGEST}"
+          docker run -d --name "$APP" --network "$NET" \
+            --user 10001:10001 --read-only --tmpfs /tmp \
+            -e DATABASE_URL="postgresql://postgres:smoke@$DB:5432/workflow" \
+            -e NOTIFY_URL="https://smoke.invalid/hook" \
+            -e LISTEN_ADDR=":8080" \
+            "${IMAGE}@${IMAGE_DIGEST}"
+
+          # curl desde un contenedor en la misma red: el agente no
+          # necesita tener curl ni un puerto publicado.
+          probe() {
+            docker run --rm --network "$NET" curlimages/curl:latest \
+              -sS -o /dev/null -w '%{http_code}' --max-time 5 "http://$APP:8080$1"
+          }
+
+          ok=""
+          for i in $(seq 1 45); do
+            if [ "$(probe /health || true)" = "200" ]; then ok=yes; break; fi
+            sleep 2
+          done
+          [ -n "$ok" ] || { echo "La imagen no llegó a responder en /health."; exit 1; }
+
+          # /ready abre una transacción, así que prueba que las
+          # migraciones corrieron y que el pool conecta.
+          [ "$(probe /ready)" = "200" ] || { echo "/ready no responde 200."; exit 1; }
+
+          # Y una escritura real, para cubrir enrutado, validación y base.
+          code=$(docker run --rm --network "$NET" curlimages/curl:latest \
+            -sS -o /dev/null -w '%{http_code}' --max-time 5 \
+            -XPOST "http://$APP:8080/users" \
+            -H 'content-type: application/json' \
+            -d '{"name":"Smoke","lastName":"Test","email":"smoke@example.com"}')
+          [ "$code" = "201" ] || { echo "POST /users respondió $code, se esperaba 201."; exit 1; }
+
+          echo "Smoke test correcto: la imagen arranca, migra y sirve."
+
+
+      - name: Scan
+        if: github.event_name != 'pull_request'
+        env:
+          GHCR_USER: ${{ secrets.GHCR_USERNAME }}
+          GHCR_PASS: ${{ secrets.GHCR_TOKEN }}
+        run: |
+          set -eu
+          docker run --rm \
+            -e TRIVY_USERNAME="$GHCR_USER" \
+            -e TRIVY_PASSWORD="$GHCR_PASS" \
+            -v "$HOME/.cache/trivy:/root/.cache/" \
+            -v "$PWD/.trivyignore.yaml:/.trivyignore.yaml:ro" \
+            aquasec/trivy:latest image \
+              --scanners vuln \
+              --severity HIGH,CRITICAL \
+              --ignore-unfixed \
+              --ignorefile /.trivyignore.yaml \
+              --exit-code 1 \
+              "${IMAGE}@${IMAGE_DIGEST}"
+
+
+      - name: Update the desired state
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          GITOPS_DEPLOY_KEY: ${{ secrets.GITOPS_DEPLOY_KEY }}
+        run: |
+          set -eu
+          # The one credential here that can change what runs in the cluster without a
+          # human merging something. It is a deploy key on camircode/gitops alone.
+          install -d -m 700 "$HOME/.ssh"
+          umask 077
+          printf '%s\n' "$GITOPS_DEPLOY_KEY" > "$HOME/.ssh/gitops"
+          export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/gitops -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+
+          rm -rf gitops
+          git clone --depth 1 "$GITOPS" gitops
+          cd gitops
+          git config user.email "ci@camir.tech"
+          git config user.name  "github-actions"
+
+          sed -i -E "s#image: ghcr\.io/camircode/workflow[@:][^[:space:]]+#image: ${IMAGE}@${IMAGE_DIGEST}#" "$MANIFEST"
+
+          if git diff --quiet; then
+            echo "Already at ${IMAGE_DIGEST}; nothing to commit."
+            exit 0
+          fi
+
+          git add "$MANIFEST"
+          git commit -m "deploy(workflow): ${IMAGE_DIGEST}
+
+          Built from camircode/workflow@${GITHUB_SHA} by GitHub Actions run ${GITHUB_RUN_ID}."
+
+          # Every application pushes to this one repository, so two builds finishing
+          # together will race. Their manifests are different files, so rebasing never
+          # conflicts; it only has to be done.
+          for attempt in 1 2 3 4 5; do
+            git push origin main && exit 0
+            echo "push rejected (attempt $attempt); rebasing onto the new tip"
+            git fetch --depth 1 origin main
+            git rebase origin/main
+          done
+          echo "could not push to gitops after 5 attempts" >&2
+          exit 1
+
+      - name: Clean up credentials
+        if: always()
+        run: |
+          docker logout ghcr.io || true

@@ -18,9 +18,10 @@ descritas más abajo.
 Un host Proxmox con trece guests sobre un bridge interno privado.
 
 Los servicios de confianza corren en contenedores LXC: `data-01` con PostgreSQL,
-`edge-01`, el controlador de Jenkins. Lo que ejecuta código de terceros corre en
-máquinas virtuales con su propio kernel: el agente de Jenkins, que ejecuta lo que
-traiga un pull request, y los nodos de Kubernetes.
+`edge-01`. Lo que ejecuta código de terceros corre en máquinas virtuales con su
+propio kernel: los nodos de Kubernetes. La integración continua ya no corre en el
+homelab: los workflows de GitHub Actions corren en máquinas virtuales efímeras de
+GitHub, que es donde se ejecuta lo que traiga un pull request.
 
 El presupuesto asignado es de 49.5 GB sobre 62 GiB. La CPU está sobrecomprometida
 33 vCPU sobre 16 hilos porque los picos de los guests no coinciden. La memoria no
@@ -59,12 +60,12 @@ reglas nombran ahora a los nodos, tomados del inventario de Ansible.
 ## Cómo llega el código
 
 ```
-push → Jenkins → test, build, escaneo → GHCR por digest
-                                           ↓ Jenkins commitea el digest
+push → GitHub Actions → test, build, escaneo → GHCR por digest
+                                           ↓ GitHub Actions commitea el digest
                                         camircode/gitops → Argo CD → cluster
 ```
 
-Argo CD es lo único que escribe en el cluster. Jenkins sólo cambia una línea en
+Argo CD es lo único que escribe en el cluster. GitHub Actions sólo cambia una línea en
 git, así que el log de `camircode/gitops` funciona como historial de despliegues
 y un rollback es un revert. El Image Updater de Argo está deshabilitado a
 propósito, para que el repositorio siga describiendo lo que corre.

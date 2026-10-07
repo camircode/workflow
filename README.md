@@ -154,8 +154,8 @@ digest inmutable, GitOps como única vía de escritura al cluster, y secretos qu
 no pasan por el repositorio.
 
 ```
-push → Jenkins → test, build, escaneo → GHCR por digest
-                                           ↓ Jenkins commitea el digest
+push → GitHub Actions → test, build, escaneo → GHCR por digest
+                                           ↓ GitHub Actions commitea el digest
                                         camircode/gitops → Argo CD → https://workflow.camir.tech
 ```
 
